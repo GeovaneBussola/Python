@@ -15,9 +15,7 @@ for i in range(1, pessoas + 1):
     elif pessoa == 'mulher':
         mulher+=1
         mulheraltura+=pessoaltura
-    else:
-        print('Digite um genero existente.')
-        continue
+    
 print(f'Temos {mulher} mulheres, a media de altura delas é: {mulheraltura/mulher}')
 print(f'Temos {homem} homens, a media de altura deles é: {homemaltura/homem}')
 
