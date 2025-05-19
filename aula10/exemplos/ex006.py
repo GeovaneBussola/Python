@@ -5,21 +5,23 @@ nomes=[]
 medias=[]
 resultados=[]
 while True:
-    nome= input('Digite o nome do aluno: ')
-    n1= float(input('Digite a nota 1 do aluno: '))
-    n2= float(input('Digite a nota 2 do aluno: '))
-    media = (n1 + n2) / 2
-    estado = 'Aprovado' if media >= 6 else "Reprovado"
-    resultados.append(estado)
-    nomes.append(nome)
-    medias.append(media)
+    while True:
+        nome= input('Digite o nome do aluno ou (0 para sair): ')
+        if nome != "0":
+            nomes.append(nome)
+        else:
+            break
+    for i in nomes:
+        n1= float(input(f'Digite a nota 1 do(a) {nomes[i]}: '))
+        n2= float(input(f'Digite a nota 2 do(a) {nomes[i]}: '))
+        media = (n1 + n2) / 2
+        estado = 'Aprovado' if media >= 6 else "Reprovado"
+        resultados.append(estado)
+        medias.append(media)
     print('Alunos cadastrados:')
     for aa,ab in enumerate(nomes):
         print(f'[{aa + 1}] {ab}')
-
-    a = int(input('Digite [1] para continuar ou [2] para parar: '))
-    if a == 2:
-        break
+    break
 while True:
     numeroaluno=int(input('Digite o numero do aluno para verirfizar seu resultado (0 para sair): '))
     if 1 <= numeroaluno <= len(nomes):
