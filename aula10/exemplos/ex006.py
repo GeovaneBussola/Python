@@ -12,8 +12,8 @@ while True:
         else:
             break
     for i in nomes:
-        n1= float(input(f'Digite a nota 1 do(a) {nomes[i]}: '))
-        n2= float(input(f'Digite a nota 2 do(a) {nomes[i]}: '))
+        n1= float(input(f'Digite a nota 1 do(a) {i}: '))
+        n2= float(input(f'Digite a nota 2 do(a) {i}: '))
         media = (n1 + n2) / 2
         estado = 'Aprovado' if media >= 6 else "Reprovado"
         resultados.append(estado)
@@ -25,7 +25,7 @@ while True:
 while True:
     numeroaluno=int(input('Digite o numero do aluno para verirfizar seu resultado (0 para sair): '))
     if 1 <= numeroaluno <= len(nomes):
-        print(f'Aluno(a) Numero {numeroaluno}({nomes[numeroaluno -1]})\nMédia: {medias[numeroaluno -1]}\nResultado: {resultados[numeroaluno -1]}')
+        print(f'Aluno(a) [{nomes[numeroaluno -1]}]\nMédia: {medias[numeroaluno -1]}\nResultado: {resultados[numeroaluno -1]}')
     elif numeroaluno == 0:
         break
     else:
