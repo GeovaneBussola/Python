@@ -23,6 +23,9 @@ for i in valores:
         par.append(i)
     else:
         impar.append(i)
+valores.sort()
+par.sort()
+impar.sort()
 print(f'Valores: {valores}')
 print(f'Par: {par}')
 print(f'Impar: {impar}')

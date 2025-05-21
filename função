@@ -10,6 +10,8 @@
 # a="amanha"
 # b="hoje"
 # teste(a,b)
+
+
 def dobra(lst):
     for i in lst:
         a = i * 2
