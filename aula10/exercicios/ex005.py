@@ -10,3 +10,26 @@
 alunos=[]
 notas=[]
 cursos=[]
+alunos_tads=0
+alunos_acima_da_media=0
+print('Dgite nome, nota e o curso do aluno (ccp) ou (tads)')
+while True:
+    alunos.append(input('Nome: '))
+    notas.append(float(input('Nota: ')))
+    cursos.append(input('Curso (ccp) (tads): ').lower())
+    sair = int(input('[0]Parar [1]Adiconar mais alunos'))
+    if sair == 1:
+        continue
+    else:
+        break
+for i in cursos:
+    if i == 'tads':
+        alunos_tads+=1
+media_alunos= sum(notas) / len(notas)
+for i in notas:
+    if i > media_alunos:
+        alunos_acima_da_media+=1
+
+print(f'Alunos matriculados em tads: [{alunos_tads}]')
+print(f'Media alunos: [{media_alunos:.2f}]')
+print(f'Alunos acima da média: [{alunos_acima_da_media}]')
