@@ -56,6 +56,8 @@ def verificar_tentativas(tentativas):
                     break
         except ValueError:
             print('Digito invalido')
+
+
 print('Bem vindo ao minigame!!')
 while True:
     tentativas = {}
