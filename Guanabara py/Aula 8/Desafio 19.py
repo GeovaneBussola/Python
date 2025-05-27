@@ -3,4 +3,4 @@ import random
 alunos = []
 for i in range(1,5):
     alunos.append(input(f'Digite o {i}° aluno: '))
-print(f'O aluno escolhido foi {random.random(alunos)}')
+print(f'O aluno escolhido foi {random.choice(alunos)}')
