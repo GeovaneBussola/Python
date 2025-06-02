@@ -5,7 +5,7 @@ salario = float(input('Digite seu salário R$'))
 parcelas = float(input('Digite em quantas anos deseja pagar o emprestimo:'))
 parcelas = parcelas * 12 
 parcela = casa / parcelas
-if parcela > (salario*0.3):
+if parcela >= (salario*0.3):
     print('Emprestimo negado')
 else:
     print('Emprestimo aceito')
