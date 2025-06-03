@@ -76,7 +76,7 @@ while True:
         print('O numero é maior') if numero > tentativa else print('O numero é menor')
         contador+=1
     if jogar_novamente() ==0:
-        print('Obrigado por jogar (☞ﾟヮﾟ)☞')
+        print('\033[32mObrigado por jogar (☞ﾟヮﾟ)☞')
         break
     else:
         continue
