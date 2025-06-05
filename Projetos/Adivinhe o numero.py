@@ -50,6 +50,7 @@ def verificar_tentativas(tentativas):
             if verificar not in (0,1):
                 print('Digite 0 ou 1')
             else:
+                limpar_terminal()
                 if verificar == 1:
                     for a, b in tentativas.items():
                         print(f'{a} = {b}')
@@ -66,23 +67,28 @@ while True:
     contador= 1
     dificuldade = verifica_dificuldade()
     numero = randint(1,dificuldade)
-    print(f'Tente acertar um numero entre 1 e {dificuldade}')
+    print(f'Tente acertar um numero de \033[1m1\033[m a \033[1m{dificuldade}\033[m')
     while True:
         tentativa = verifica_numero(contador,dificuldade)
         tentativas[f'{contador}° tentativa'] = tentativa
         if tentativa == numero:
-            print('-' * 44)
-            print(f'Você acertou, parabéns!!')
-            print(f'O numero escolhido foi {numero} e você acertou em {contador} tentativa(s)!!')
-            print('-' * 44)
+            limpar_terminal()
+            print(f'\033[32mVocê acertou, parabéns!!')
+            print(f'O numero escolhido foi {numero} e você acertou em {contador} {"tentativa" if contador == 1 else "tentativas"}!!\033[m')
             sleep(1.5)
+            print('-' * 35)
             verificar_tentativas(tentativas)
             break
         print('O numero é \033[1m++Maior++\033[m ' , end="") if numero > tentativa else print('O numero é \033[1m--Menor--\033[m ', end="")
         contador+=1
-    print('-' * 16)
+    print('-' * 23)
     if jogar_novamente() ==0:
-        print('\033[32mObrigado por jogar (☞ﾟヮﾟ)☞')
+        limpar_terminal()
+        print('Obrigado por jogar (☞ﾟヮﾟ)☞')
+        for i in 'Jogo desenvolvido por Geovane':
+            print(f'{i}',end="")
+            sleep(0.1)
+        print()
         break
     else:
         limpar_terminal()
