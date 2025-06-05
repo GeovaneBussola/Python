@@ -1,4 +1,8 @@
 from random import randint
+from time import sleep
+import os
+def limpar_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
 def verifica_numero(contador,dificuldade):
     while True:
         try:
@@ -12,18 +16,19 @@ def verifica_numero(contador,dificuldade):
 def verifica_dificuldade():
     while True:
         try:
-            dificuldade = int(input('Escolha o nivel de dificuldade:\n[1] easy(1 - 10)\n[2] medium (1 - 100)\n[3] hard (1 - 1000)\n'))
+            dificuldade = int(input('Escolha o nivel de dificuldade:\n[1] Easy (1 - 10)\n[2] Medium (1 - 100)\n[3] Hard (1 - 1000)\n'))
             if dificuldade > 3 or dificuldade <1:
                 print('Digito invalido!! Digite o nivel de dificuldade [1], [2] ou [3]')
             else:
+                limpar_terminal()
                 if dificuldade == 1:
-                    print('---Dificuldade [Easy]---')
+                    print(f'{"-" * 8} Dificuldade \033[32m[Easy]\033[m {"-" * 8}')
                     dificuldade = 10
                 elif dificuldade == 2:
-                    print('---Dificuldade [Medium]---')
+                    print(f'{"-" * 8} Dificuldade \033[33m[Medium]\033[m {"-" * 8}')
                     dificuldade = 100
                 else:
-                    print('---Dificuldade [Hard]---')
+                    print(f'{"-" * 8} Dificuldade \033[31m[Hard]\033[m {"-" * 8}')
                     dificuldade = 1000
                 return dificuldade
         except ValueError:
@@ -31,9 +36,7 @@ def verifica_dificuldade():
 def jogar_novamente():
     while True:
         try:
-            print("-" *30)
             continuar = int(input('Deseja jogar novamente?\n(0)não\n(1)sim\n'))
-            print('-' * 30)
             if continuar not in (0,1) :
                 print('Digite 0 ou 1')
             else:
@@ -48,9 +51,9 @@ def verificar_tentativas(tentativas):
                 print('Digite 0 ou 1')
             else:
                 if verificar == 1:
-                    print('-' * 30)
                     for a, b in tentativas.items():
                         print(f'{a} = {b}')
+                    sleep(1.5)
                     break
                 else:
                     break
@@ -63,22 +66,26 @@ while True:
     contador= 1
     dificuldade = verifica_dificuldade()
     numero = randint(1,dificuldade)
+    print(f'Tente acertar um numero entre 1 e {dificuldade}')
     while True:
         tentativa = verifica_numero(contador,dificuldade)
         tentativas[f'{contador}° tentativa'] = tentativa
         if tentativa == numero:
-            print('-' * 30)
+            print('-' * 44)
             print(f'Você acertou, parabéns!!')
-            print(f'O numero era {numero}, você acertou em {contador} tentativa(s)!!')
-            print('-' * 30)
+            print(f'O numero escolhido foi {numero} e você acertou em {contador} tentativa(s)!!')
+            print('-' * 44)
+            sleep(1.5)
             verificar_tentativas(tentativas)
             break
-        print('O numero é maior') if numero > tentativa else print('O numero é menor')
+        print('O numero é \033[1m++Maior++\033[m ' , end="") if numero > tentativa else print('O numero é \033[1m--Menor--\033[m ', end="")
         contador+=1
+    print('-' * 16)
     if jogar_novamente() ==0:
         print('\033[32mObrigado por jogar (☞ﾟヮﾟ)☞')
         break
     else:
+        limpar_terminal()
         continue
     
     
