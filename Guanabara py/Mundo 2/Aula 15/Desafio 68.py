@@ -16,8 +16,7 @@ while True:
         if soma % 2 == 0:
             vitorias+=1
         else:
-            computadorvalor = 1
-           
+            computadorvalor = 1    
     elif parimpar in ['I','IMPAR']:
         if soma % 2 == 0:
             computadorvalor = 1
