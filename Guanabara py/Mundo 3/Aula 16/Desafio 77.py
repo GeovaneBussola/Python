@@ -7,4 +7,5 @@ for i in lista:
     for a in i:
         if a in 'aeiou':
             print(f'{a} ', end='')
-    
+
+
