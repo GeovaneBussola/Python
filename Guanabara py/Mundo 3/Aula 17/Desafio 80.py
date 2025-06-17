@@ -8,9 +8,15 @@ for i in range(5):
         lista.append(n)
     else:
         pos=0
-        while pos < 
+        while pos < len(lista):
+            if n <= lista[pos]:
+                print(f'Foi ')
+                lista.insert(pos,n)
+                break
+        pos+=1
 
-                
+print('-='*20)
+print(f'Os valores digitados foram {lista}')
 
         
     
