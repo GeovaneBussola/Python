@@ -5,13 +5,13 @@
 
 principal = []
 temporario = []
-maispesado = 0
-maisleve = 0
+pessoascadastradas = 0
 while True:
     temporario.append(input('Digite o nome da pessoa: '))
     temporario.append(int(input('Digite o peso da pessoa: ')))
     principal.append(temporario[:])
     temporario.clear()
+    pessoascadastradas += 1
     while True:
         continuar = input('Deseja adicionar mais alguem? [s/n] ').lower().strip()
         if continuar in ('s','n'):
@@ -20,8 +20,20 @@ while True:
             print('digito invalido')
     if continuar == 'n':
         break
+maispesado=principal[0][1]
+maisleve=principal[0][1]
 for i in principal:
-    if i[1] == 0 or i[1] > maispesado:
+    if i[1] > maispesado:
         maispesado = i[1]
-    if i[1] == 0 or i[1] < maisleve:
+    if i[1] < maisleve:
         maisleve = i[1]
+print(f'O maior peso cadastrado foi de {maispesado}. Peso de ')
+for i in principal:
+    if i[1] == maispesado:
+        print(f'[{i[0]}] ')
+print(f'O menor peso cadastrado foi de {maisleve}. Peso de ')
+for i in principal:
+    if i[1] == maisleve:
+        print(f'[{i[0]}]')
+print(f'E foi cadastradas no total {pessoascadastradas} pessoa[s]')
+
