@@ -2,7 +2,7 @@
 lista=[]
 contador=0
 while True:
-    nome = input('Digite o nome: ')
+    nome = input('Digite o nome: ').capitalize()
     n1 = float(input('Digite a n1 do aluno: '))
     n2 = float(input('Digite a n2 do aluno: '))
     lista.append(list())
@@ -13,16 +13,19 @@ while True:
         break
 
 print('=-'*15)
-print('Num   Nome      Média')
+print(f'{"Num":<4}{"Nome":<10}{"Média":<8}')
 print('-'*24)
 for i in range(len(lista)):
-    print(f'{i}     {lista[i][0]:<12}{(lista[i][1][0] + lista[i][1][1]) / 2}')
+    print(f'{i:<4}{lista[i][0]:<10}{(lista[i][1][0] + lista[i][1][1]) / 2:<7.1f}')
 print('=-'*15)
 while True:
     nota=int(input('Mostrar nota de qual aluno? [999] para interromper'))
+    print('-'*24)
     if nota == 999:
         break
-    elif lista[nota] in lista:
-        print('tem')
+    elif 0 <= nota < len(lista):
+        print(f'A nota do(a) aluno é: {lista[nota][1]}')
+        print('-'*24)
     else:
-        print('nao tem')
+        print('posição inexistente')
+        print('-'*24)

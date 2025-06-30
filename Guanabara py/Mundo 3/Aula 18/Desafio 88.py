@@ -17,6 +17,7 @@ for i in range(njogos):
         aleatorio = randint(1,60)
         if aleatorio not in jogos[i]:
             jogos[i].append(aleatorio)
+    jogos[i].sort()
     print(f'Jogo n{i+1}:{jogos[i]}')
 print(f'{"=========< Boa Sorte >=========":^30}')
 

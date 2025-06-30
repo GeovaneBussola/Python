@@ -9,7 +9,7 @@ for i in range(3):
         contador += 1
 for i in matriz:
     for i in i:
-        print(f'[{i}]',end='')
+        print(f'[{i:^4}]',end='')
     print()
 
 
