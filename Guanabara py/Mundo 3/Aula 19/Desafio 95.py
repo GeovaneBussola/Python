@@ -30,7 +30,7 @@ print((len(a) + 2)*"-")
 
 #Analisar dado especifico
 for i, v in enumerate(jogadores):
-    print(f'{i:^5} {v["Nome"]:<15}{v["Total de gols"]:^8}{v["Gols"]}')
+    print(f'{i:^5} {v["Nome"]:<15}{v["Total de gols"]:^8}{str(v["Gols"]):10}')
 print((len(a) + 2)*"-")
 while True:
     acessar = int(input('Deseja fazer o levantamento de qual jogador? '))
