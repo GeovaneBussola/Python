@@ -7,7 +7,7 @@ def leiaint(msg):
             numero = int(numero)
             return numero
         else:
-            print('\033[31mDigite um numero valido\033[m')
+            print('\033[31mDigite apenas um numero\033[m')
 
             
 num = leiaint('Digite um numero: ')
