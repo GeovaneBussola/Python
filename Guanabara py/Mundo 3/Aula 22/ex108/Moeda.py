@@ -13,3 +13,6 @@ def aumenta(numero,taxa):
 def reduz(numero,taxa):
     numero = numero - (numero*taxa/100)
     return numero
+
+def moeda(numero):
+    return f'R${numero:.2f}'.replace('.',',')
