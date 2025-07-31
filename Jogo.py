@@ -24,13 +24,14 @@ y_cobra = int(altura / 2)
 x_maça = randint(0,600)
 y_maça = randint(0,430)
 
-velocidade = 5
+
+velocidade = 2
 x_controle = velocidade
 y_controle = 0
 
 pontos = 0
 
-tamanho_cobra = 5
+tamanho_cobra = 10
 
 fonte = pygame.font.SysFont('arial',40,False,False)
 
@@ -45,6 +46,18 @@ pygame.display.set_caption('Jogooo')
 def aumenta_cobra(lista_cobra):
     for XeY in lista_cobra:
         pygame.draw.rect(tela,(0,255,0),(XeY[0],XeY[1],20,20))
+
+def reiniciar_jogo():
+    global pontos, tamanho_cobra, x_cobra, y_cobra, lista_cobra, lista_cabeça, x_maça, y_maça, morreu
+    pontos = 0
+    tamanho_cobra = 10
+    x_cobra = int(largura / 2)
+    y_cobra = int(altura / 2)
+    lista_cobra = []
+    lista_cabeça = []
+    x_maça = randint(0,600)
+    y_maça = randint(0,430)
+    morreu = False
     
 while True:
     relogio.tick(100)
@@ -58,17 +71,29 @@ while True:
         
         if event.type == KEYDOWN:
                 if event.key == K_a:
-                    x_controle = -velocidade    
-                    y_controle = 0
+                    if x_controle == velocidade:
+                        pass
+                    else:
+                        x_controle = - velocidade    
+                        y_controle = 0
                 if event.key == K_d:
-                    x_controle = velocidade
-                    y_controle = 0
+                    if x_controle == - velocidade:
+                        pass
+                    else:
+                        x_controle = velocidade
+                        y_controle = 0
                 if event.key == K_w:
-                    y_controle = -velocidade
-                    x_controle = 0
+                    if y_controle == velocidade:
+                        pass
+                    else:
+                        y_controle = - velocidade
+                        x_controle = 0
                 if event.key == K_s:
-                    y_controle = velocidade
-                    x_controle = 0
+                    if y_controle == -velocidade:
+                        pass
+                    else:
+                        y_controle = velocidade
+                        x_controle = 0
     
     x_cobra += x_controle
     y_cobra += y_controle
@@ -77,9 +102,9 @@ while True:
     
     if cobra.colliderect(maça):
         x_maça = randint(0,600)
-        y_maça = randint(0,430) 
+        y_maça = randint(0,430)
         pontos += 1
-        tamanho_cobra+=1
+        tamanho_cobra+=10
         choice((barulho1,barulho2)).play()
 
         
@@ -88,6 +113,37 @@ while True:
     lista_cabeça.append(x_cobra)
     lista_cabeça.append(y_cobra)
     lista_cobra.append(lista_cabeça)
+
+    if lista_cobra.count(lista_cabeça) > 1:
+        fonte2 = pygame.font.SysFont('arial',20,True,True)
+        mensagem = f'Game over! precione a tecla \'R\' para jogar novamente'
+        texto_formatado2 = fonte2.render(mensagem,True,(0,0,0))
+        ret_texto = texto_formatado2.get_rect()
+        morreu = True
+
+        while morreu:
+            tela.fill((255,255,255))
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_r:
+                        reiniciar_jogo()
+
+            ret_texto.center = (largura//2,altura//2)
+            tela.blit(texto_formatado2, ret_texto)
+            pygame.display.update()
+
+    if x_cobra > largura:
+        x_cobra = 0
+    if x_cobra < 0:
+        x_cobra = largura
+    if y_cobra > altura:
+        y_cobra = 0
+    if y_cobra < 0:
+        y_cobra = altura
+
     if len(lista_cobra) > tamanho_cobra:
         del lista_cobra[0]
     aumenta_cobra(lista_cobra)
