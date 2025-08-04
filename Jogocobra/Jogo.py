@@ -8,12 +8,12 @@ pygame.init()
 
 pygame.mixer.music.set_volume(0.1)
 
-musica_de_fundo = pygame.mixer.music.load('best-game-console-301284.mp3')
+musica_de_fundo = pygame.mixer.music.load('jogocobra/best-game-console-301284.mp3')
 pygame.mixer.music.play(-1)
 
-barulho1 = pygame.mixer.Sound('seu-madruga-nossa.mp3')
+barulho1 = pygame.mixer.Sound('jogocobra/seu-madruga-nossa.mp3')
 barulho1.set_volume(0.5)
-barulho2 = pygame.mixer.Sound('spring-boing.mp3')
+barulho2 = pygame.mixer.Sound('jogocobra/spring-boing.mp3')
 barulho2.set_volume(0.5)
 largura = 640
 altura = 480
