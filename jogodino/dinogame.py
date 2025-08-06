@@ -19,6 +19,17 @@ def exibe_mensagem(msg,tamanho,cor):
     texto_formatado = fonte.render(mensagem,True,cor)
     return texto_formatado
 
+def reiniciar_jogo():
+    global pontos,velocidade_jogo,colidiu,aleatorio
+    pontos = 0
+    velocidade_jogo = 10
+    colidiu = False
+    dino.rect.y = altura - 64 -96 // 2
+    dino.pulo = False
+    dinovoador.rect.x = largura
+    cacto.rect.x = largura
+    aleatorio = choice([0,1])
+
 diretorio_principal = os.path.dirname(__file__)
 diretorio_imagens = os.path.join(diretorio_principal, 'imagens')
 diretorio_sons = os.path.join(diretorio_principal,'sons')
@@ -64,12 +75,12 @@ class Dino(pygame.sprite.Sprite):
         self.som_pulo.play()
     def update(self):
         if self.pulo:
-            self.rect.y-= velocidade_jogo * 2
+            self.rect.y-= 20
             if self.rect.y <= 200:
                 self.pulo = False
         else:
             if self.rect.y < self.pos_y_inicial:
-                self.rect.y += velocidade_jogo *2
+                self.rect.y += 15
             else:
                 self.rect.y = self.pos_y_inicial
         if self.index_lista > 2:
@@ -179,7 +190,12 @@ while True:
                 if dino.rect.y != dino.pos_y_inicial:
                     pass
                 else:
-                    dino.pular()
+                    if not colidiu:
+                        dino.pular()
+
+            if event.key == K_r and colidiu == True:
+                reiniciar_jogo()
+
     colisoes = pygame.sprite.spritecollide(dino,grupo_obstaculos,False,pygame.sprite.collide_mask)
     
     todas_as_sprites.draw(tela)
