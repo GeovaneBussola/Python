@@ -9,7 +9,7 @@ largura = 1080
 altura = 720
 
 velocidade = 10
-velocidade_pulo = 20
+velocidade_pulo = 22
 tamanho_mago = 3
 
 vivo = True
@@ -74,6 +74,11 @@ class Mago(pygame.sprite.Sprite):
         if self.pulando:
             if self.rect.y > 350:
                 self.rect.y -= velocidade_pulo
+            else:
+                self.pulando = False
+        if self.pulando == False and self.rect.y < self.altura_inicial:
+            self.rect.y += velocidade_pulo
+
         if self.direita:
             if self.index_sprite > 7:
                 self.index_sprite = 0
