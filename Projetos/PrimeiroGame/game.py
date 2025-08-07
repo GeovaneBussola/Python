@@ -27,7 +27,8 @@ parado = pygame.image.load(os.path.join(diretorio_imagens,'parado.png'))
 paradoesquerda = pygame.image.load(os.path.join(diretorio_imagens,'paradoesquerda.png'))
 pulodireita = pygame.image.load(os.path.join(diretorio_imagens,'pulodireita.png'))
 puloesquerda = pygame.image.load(os.path.join(diretorio_imagens,'puloesquerda.png'))
-
+inimigo = pygame.image.load(os.path.join(diretorio_imagens,'inimigo.png'))
+bola_de_fogo_direita = pygame.image.load(os.path.join(diretorio_imagens,'bola_de_fogo_direita.png'))
 
 fundo = pygame.image.load(os.path.join(diretorio_imagens,'floresta.png'))
 tela_de_fundo = pygame.transform.scale(fundo,(largura,altura))
@@ -39,10 +40,14 @@ relogio = pygame.time.Clock()
 class Mago(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+        self.pulos = 0
+        self.velocidade_y = 0
+        self.gravidade = 1.4
+        self.pulo_força = -22
+        self.no_chao = True
         self.virado_para_direita = True
         self.direita = False
         self.esquerda = False
-        self.pulando = False
         self.altura_inicial = altura - 200
         self.spritesparado = []
         for i in range(9):
@@ -64,31 +69,35 @@ class Mago(pygame.sprite.Sprite):
             img = correresquerda.subsurface((i*32,0),(32,32))
             img = pygame.transform.scale(img,(tamanho_mago*32,tamanho_mago*32))
             self.correresquerda.append(img)
+        self.pulodireita_subindo = []
+        for i in range(7):
+            img = pulodireita.subsurface((i*32,0),(32,32))
+            img = pygame.transform.scale(img,(tamanho_mago*3,tamanho_mago*3))
+            self.pulodireita_subindo.append(img)
         self.index_sprite = 0
         self.image = self.spritesparado[self.index_sprite]
         self.rect = self.image.get_rect()
         self.rect.x = 300
         self.rect.y = self.altura_inicial
-
     def update(self):
-        if self.pulando:
-            if self.rect.y > 350:
-                self.rect.y -= velocidade_pulo
-            else:
-                self.pulando = False
-        if self.pulando == False and self.rect.y < self.altura_inicial:
-            self.rect.y += velocidade_pulo
-
+        self.velocidade_y += self.gravidade
+        self.rect.y += self.velocidade_y
+        if self.rect.y >= self.altura_inicial:
+            self.rect.y = self.altura_inicial
+            self.velocidade_y = 0
+            self.no_chao = True
+            self.pulos = 0
         if self.direita:
             if self.index_sprite > 7:
                 self.index_sprite = 0
-            self.rect.x += velocidade
+            if self.rect.x < largura - 60:
+                self.rect.x += velocidade
             self.image = self.correrdireita[int(self.index_sprite)]
             self.index_sprite += 0.3
         elif self.esquerda:
             if self.index_sprite > 7:
                 self.index_sprite = 0
-            if self.rect.x > -20:
+            if self.rect.x > -30:
                 self.rect.x -= velocidade
             self.image = self.correresquerda[int(self.index_sprite)]
             self.index_sprite += 0.3
@@ -104,10 +113,51 @@ class Mago(pygame.sprite.Sprite):
                 self.image = self.spriteparadoesquerda[int(self.index_sprite)]
                 self.index_sprite += 0.15            
 
+class Inimigo(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.inimigolist = []
+        for i in range(9):
+            img = inimigo.subsurface((i*32,0),(32,32))
+            img = pygame.transform.scale(img,(tamanho_mago*32,tamanho_mago*32))
+            self.inimigolist.append(img)
+        self.index = 0
+        self.image = self.inimigolist[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.x = 800
+        self.rect.y = altura - 200
+    def update(self):
+        if self.index > 8:
+            self.index = 0
+        self.image = self.inimigolist[int(self.index)]
+        self.index += 0.2
+    
+class Inimigos(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.inimigolist = []
+        for i in range(6):
+            img = bola_de_fogo_direita.subsurface((i*32,0),(32,32))
+            img = pygame.transform.scale(img,(tamanho_mago*32,tamanho_mago*32))
+            self.inimigolist.append(img)
+        self.index = 0
+        self.image = self.inimigolist[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.x = 700
+        self.rect.y = altura - 200
+    def update(self):
+        if self.index > 5:
+            self.index = 0
+        self.image = self.inimigolist[int(self.index)]
+        self.index += 0.2
+
 todas_sprites = pygame.sprite.Group()
 mago = Mago()
+inimigo = Inimigo()
+bola = Inimigos()
 todas_sprites.add(mago)
-
+todas_sprites.add(inimigo)
+todas_sprites.add(bola)
 while True:
     relogio.tick(30)
     tela.blit(tela_de_fundo,(0,0))
@@ -116,9 +166,17 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             exit()
+        if event.type == KEYDOWN:
+            if (event.key == K_w or event.key == K_SPACE) and mago.pulos < 2:
+                if mago.pulos == 0:
+                    mago.velocidade_y = mago.pulo_força
+                else:
+                    mago.velocidade_y = 0
+                    mago.velocidade_y += mago.pulo_força * 0.8
+                mago.pulos += 1
+
 
     teclas = pygame.key.get_pressed()
-
     mago.direita = False
     mago.esquerda = False
     if teclas [K_d]:
@@ -127,9 +185,6 @@ while True:
     elif teclas [K_a]:
         mago.esquerda = True
         mago.virado_para_direita = False
-    if teclas [K_w] or teclas [K_SPACE]:
-        mago.pulando = True
-    
 
     todas_sprites.draw(tela)
     pygame.display.flip()
