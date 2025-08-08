@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from sys import exit
 import os
-
+from random import choice
 pygame.init()
 
 largura = 1080
@@ -29,6 +29,7 @@ pulodireita = pygame.image.load(os.path.join(diretorio_imagens,'pulodireita.png'
 puloesquerda = pygame.image.load(os.path.join(diretorio_imagens,'puloesquerda.png'))
 inimigo = pygame.image.load(os.path.join(diretorio_imagens,'inimigo.png'))
 bola_de_fogo_direita = pygame.image.load(os.path.join(diretorio_imagens,'bola_de_fogo_direita.png'))
+bola_de_fogo_esquerda = pygame.image.load(os.path.join(diretorio_imagens,'bola_de_fogo_esquerda.png'))
 
 fundo = pygame.image.load(os.path.join(diretorio_imagens,'floresta.png'))
 tela_de_fundo = pygame.transform.scale(fundo,(largura,altura))
@@ -42,7 +43,7 @@ class Mago(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.pulos = 0
         self.velocidade_y = 0
-        self.gravidade = 1.4
+        self.gravidade = 1.7
         self.pulo_força = -22
         self.no_chao = True
         self.virado_para_direita = True
@@ -111,11 +112,12 @@ class Mago(pygame.sprite.Sprite):
                 if self.index_sprite > 8:
                     self.index_sprite = 0
                 self.image = self.spriteparadoesquerda[int(self.index_sprite)]
-                self.index_sprite += 0.15            
+                self.index_sprite += 0.15          
 
 class Inimigo(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+        self.vida = 100
         self.inimigolist = []
         for i in range(9):
             img = inimigo.subsurface((i*32,0),(32,32))
@@ -126,38 +128,75 @@ class Inimigo(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 800
         self.rect.y = altura - 200
+        self.mask = pygame.mask.from_surface(self.image)
     def update(self):
         if self.index > 8:
             self.index = 0
         self.image = self.inimigolist[int(self.index)]
         self.index += 0.2
     
-class Inimigos(pygame.sprite.Sprite):
-    def __init__(self):
+class Firebol(pygame.sprite.Sprite):
+    def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
-        self.inimigolist = []
+        self.firebol_list = []
         for i in range(6):
             img = bola_de_fogo_direita.subsurface((i*32,0),(32,32))
-            img = pygame.transform.scale(img,(tamanho_mago*32,tamanho_mago*32))
-            self.inimigolist.append(img)
+            img = pygame.transform.scale(img,(3*32,3*32))
+            self.firebol_list.append(img)
         self.index = 0
-        self.image = self.inimigolist[self.index]
+        self.image = self.firebol_list[self.index]
         self.rect = self.image.get_rect()
-        self.rect.x = 700
-        self.rect.y = altura - 200
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
+        self.mask = pygame.mask.from_surface(self.image)
     def update(self):
         if self.index > 5:
             self.index = 0
-        self.image = self.inimigolist[int(self.index)]
+        if self.rect.x < largura:
+            self.rect.x += 20
+        else:
+            self.kill()
+        self.image = self.firebol_list[int(self.index)]
+        self.index += 0.2
+
+class Firebolesquerda(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.firebol_list_esquerda = []
+        for i in range(6):
+            img = bola_de_fogo_esquerda.subsurface((i*32,0),(32,32))
+            img = pygame.transform.scale(img,(3*32,3*32))
+            self.firebol_list_esquerda.append(img)
+        self.index = 0
+        self.image = self.firebol_list_esquerda[self.index]
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
+        self.mask = pygame.mask.from_surface(self.image)
+    def update(self):
+        if self.index > 5:
+            self.index = 0
+        if self.rect.x < largura:
+            self.rect.x -= 20
+        else:
+            self.kill()
+        self.image = self.firebol_list_esquerda[int(self.index)]
         self.index += 0.2
 
 todas_sprites = pygame.sprite.Group()
+bolas_de_fogo = pygame.sprite.Group()
+inimigos = pygame.sprite.Group()
 mago = Mago()
 inimigo = Inimigo()
-bola = Inimigos()
+
 todas_sprites.add(mago)
 todas_sprites.add(inimigo)
-todas_sprites.add(bola)
+inimigos.add(inimigo)
+
 while True:
     relogio.tick(30)
     tela.blit(tela_de_fundo,(0,0))
@@ -174,7 +213,21 @@ while True:
                     mago.velocidade_y = 0
                     mago.velocidade_y += mago.pulo_força * 0.8
                 mago.pulos += 1
+            if event.key == K_e:
+                if mago.esquerda or mago.virado_para_direita == False:
+                    firebolesquerda = Firebolesquerda(mago.rect.centerx - 80, mago.rect.centery - 45)
+                    bolas_de_fogo.add(firebolesquerda)
+                    todas_sprites.add(firebolesquerda)
+                else:
+                    firebol = Firebol(mago.rect.centerx - 15, mago.rect.centery - 45)
+                    bolas_de_fogo.add(firebol)
+                    todas_sprites.add(firebol)
 
+    colisoes_bola_inimigo = pygame.sprite.groupcollide(bolas_de_fogo, inimigos, True, False, pygame.sprite.collide_mask)
+    if colisoes_bola_inimigo:
+        inimigo.vida -= 20
+    if inimigo.vida <=0:
+        inimigo.kill()
 
     teclas = pygame.key.get_pressed()
     mago.direita = False
