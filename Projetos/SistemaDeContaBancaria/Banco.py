@@ -1,16 +1,17 @@
-
 def lerfloat(msg):
-    num = input(msg)
-    if ',' in num:
-        if num.count(',') > 1:
-            return 'Digito invalido'
-        else:
-            num = num.replace(',','.')
-    try:
-        num = float(num)
-        return num
-    except:
-        return 'Digito invalido'
+    while True:
+        num = input(msg)
+        if ',' in num:
+            if num.count(',') > 1:
+                print('Digito invalido')
+                continue
+            else:
+                num = num.replace(',','.')
+        try:
+            num = float(num)
+            return num
+        except:
+            print('Digito invalido')
     
 def lerint(msg):
     while True:
@@ -32,6 +33,7 @@ def lerint_intervalo(msg,inicio,fim):
             print('Digito ivalido! Por favor digite um numero valido')
             
 def criar_conta(tipo_de_conta):
+    print('-'*5,'Criando conta','-'*5)
     titular = str(input('Titular: '))
     saldo = 0
     numero = len(contas) + 1
@@ -40,6 +42,8 @@ def criar_conta(tipo_de_conta):
     elif tipo_de_conta == 'corrente':
         conta = Conta_corrente(titular,saldo,numero)
     contas.append(conta)
+    print(f'Conta criada com sucesso!')
+    print('-'*25)
 
 class Conta:
     def __init__(self,titular,saldo,numero):
@@ -64,10 +68,7 @@ class Conta:
     def extrato(self):
         print('-'*5,'Extrato','-'*5)
         print(f'Conta {self.tipo_de_conta}\nTitular {self.titular}\nNumero {self.numero}\nSaldo R${self.saldo}')
-    def mostrar_extrato(self):
-        print(f'Titiular: R${self.titular}')
-        print(f'Numero: R${self.numero}')
-        print(f'Saldo: R${self.saldo}')
+        print('-'*19)
 
 class Conta_corrente(Conta):
     def __init__(self,titular,saldo,numero):
@@ -120,17 +121,14 @@ while True:
     #Criar conta normal
     elif opção == 2:
         criar_conta('normal')
-        print(f'Conta criada com sucesso!')
+        
     #Criar conta corrente
     elif opção == 3:
         criar_conta('corrente')
-        print(f'Conta criada com sucesso!')
+        
     #Sair
     elif opção == 4:
         print('Saindo...')
         break
                     
-
-
-
 
