@@ -28,7 +28,6 @@ def lerint_intervalo(msg,inicio,fim):
             if num >=inicio and num <= fim:
                 return num
             else:
-                print(f'Digito fora do intervalo, Por favor digite um numero valido ')
         except:
             print('Digito ivalido! Por favor digite um numero valido')
             
