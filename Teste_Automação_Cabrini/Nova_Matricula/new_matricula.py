@@ -24,6 +24,7 @@ for i in planilha.index:
     lista[i].append(planilha.loc[i,'RM'])
     lista[i].append(str(planilha.loc[i,'Data_de_Nascimento']))
 
+print(lista)
 
 #Inicialização do google
 auto.hotkey('win','d') # Miniminiza todas janelas
@@ -37,10 +38,14 @@ qtd_press('tab',4) # Ir para google apps
 auto.PAUSE = 0.5
 auto.press('enter') # Selecionar google apps
 auto.press('enter') # Abrir administrador
-sleep(3)
+sleep(4)
 auto.write('g61050548') # Digitar senha da conta
 auto.press('enter') # Abrir conta adm
-sleep(3)
+sleep(6)
+auto.PAUSE = 0
+qtd_press('tab',17) # Ir até adicionar usuario
+auto.press('enter') # Abrir adicionar usuário
+sleep(6)
 
 for i in range(len(lista)):
     nome_completo = lista[i][0]
@@ -52,11 +57,7 @@ for i in range(len(lista)):
     gmail = f'mc.{rm}'
     senha = f'{rm}{ultimo_nome}'.lower()
 
-    auto.PAUSE = 0
-    qtd_press('tab',13) # Ir até adicionar usuario
-    sleep(1)
-    auto.press('enter') # Abrir adicionar usuário
-    sleep(4)
+    auto.PAUSE = 0.2
     auto.write(nome)
     auto.press('tab')
     auto.write(sobrenome)
@@ -66,10 +67,22 @@ for i in range(len(lista)):
     auto.press('enter')
     qtd_press('tab',7)
     auto.press('right')
+    sleep(1)
     auto.write(senha)
     qtd_press('tab',2)
     auto.press('space')
-    sleep(10)
+    qtd_press('tab',2)
+    auto.press('enter')
+    sleep(8)
+    auto.PAUSE = 0
+    qtd_press('tab',11)
+    sleep(0.2)
+    auto.press('enter')
+    sleep(6)
+    qtd_press('tab',20)
+    sleep(0.2)
+    auto.press('enter')
+    sleep(6)
 
 
 
