@@ -81,8 +81,8 @@ def qtd_press(tecla,vezes,tempo=0):
 
 #Localiza e realiza a leitura da planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
-caminho_planilha = os.path.join(diretorio,'planilhateste.xlsx')
-planilha = pd.read_excel(r'C:\Users\geovane.bussola.MADRECABRINI\Downloads\planilhateste.xlsx')
+caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
+planilha = pd.read_excel(caminho_planilha)
 print(planilha)
 
 #Cria listas com Nome,RM e Datada_de_Nascimento de cada aluno na planilha
