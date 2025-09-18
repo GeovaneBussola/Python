@@ -3,6 +3,13 @@ import pyautogui as auto
 from time import sleep
 import os
 
+
+def inicializar_navegador():
+    auto.hotkey('win','d') # Miniminiza todas janelas
+    auto.hotkey('ctrl','alt','c') # Abre o Chrome
+    sleep(5) # Espera o Chrome abrir
+    auto.hotkey('win','up') # Maximiza a tela caso esteja em janela
+
 def qtd_press(tecla,vezes,tempo=0):
     for i in range(vezes):
         auto.press(tecla)
@@ -26,12 +33,8 @@ for i in planilha.index:
 
 print(lista)
 
-#Inicialização do google
-auto.hotkey('win','d') # Miniminiza todas janelas
-auto.hotkey('ctrl','alt','c') # Abre o Chrome
-sleep(5) # Espera o Chrome abrir
-auto.hotkey('win','up') # Maximiza a tela caso esteja em janela
-
+#Inicialização do Navegador
+inicializar_navegador()
 
 #Gmail-- Cria o gmail e a senha a partir da lista
 qtd_press('tab',4) # Ir para google apps
@@ -47,6 +50,7 @@ qtd_press('tab',17) # Ir até adicionar usuario
 auto.press('enter') # Abrir adicionar usuário
 sleep(6)
 
+#Gmail-- Cria o gmail e a senha a partir da lista
 for i in range(len(lista)):
     nome_completo = lista[i][0]
     nome_dividido = nome_completo.split()
@@ -78,13 +82,12 @@ for i in range(len(lista)):
     qtd_press('tab',11)
     sleep(0.2)
     auto.press('enter')
-    sleep(6)
-    qtd_press('tab',20)
-    sleep(0.2)
-    auto.press('enter')
-    sleep(6)
+    if i != len(lista) - 1:
+        sleep(6)
+        auto.click(x=1301, y=243)
+        sleep(6)
 
-
+auto.hotkey('win','d') # Miniminiza todas janelas
 
 
 
