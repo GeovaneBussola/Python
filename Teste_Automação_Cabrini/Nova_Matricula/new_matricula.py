@@ -2,6 +2,7 @@ import pandas as pd
 import pyautogui as auto
 from time import sleep
 import os
+from pyperclip import copy
 
 def cadastro_google():
     # Abrir google apps
@@ -96,12 +97,24 @@ for i in planilha.index:
     lista[i].append(str(planilha.loc[i,'Turma']))
 print(lista)
 #Inicialização do Navegador
-# inicializar_navegador()
+inicializar_navegador()
 # cadastro_google()
 
+# Abre o moodle
+copy('https://educacaocabriniana.com.br/moodle/admin/user.php')
+auto.hotkey('ctrl','v')
+auto.press('enter')
+sleep(2)
 
-
-
+# Digita o login, senha e entra
+qtd_press('tab',8)
+auto.write('57915052802')
+auto.press('tab')
+auto.write('g61050548')
+auto.press('enter')
+sleep(3)
+# Rola ate adicionar novo usuario e seleciona
+auto.scroll('-1000')
 
 
 
