@@ -8,7 +8,7 @@ import os
 
 posicao_img = (766,125,125,17)
 auto.PAUSE = 0.3
-pasta = r'C:\Users\geovane.bussola.MADRECABRINI\Downloads\Preciso_postar\Certificados 2025'
+pasta = r'C:\Users\geovane.bussola.MADRECABRINI\Downloads\Preciso_postar\Certificados 2025\Medalhistas'
 
 auto.hotkey('win','down')
 
@@ -20,7 +20,7 @@ while quantidade_arquivos_na_pasta > 1:
     auto.click(x=1192, y=242)
     auto.press('f2')
     auto.hotkey('ctrl','c')
-    sleep(0.5)
+    sleep(1)
 
     nome_do_arquivo = paste().strip()
 
@@ -32,7 +32,7 @@ while quantidade_arquivos_na_pasta > 1:
 
     auto.click(x=839, y=100)
     auto.hotkey('ctrl','v')
-    sleep(2)
+    sleep(3)
 
     try:
         recebe = auto.locateOnScreen("nenhum_usuario.png",posicao_img)
@@ -40,18 +40,18 @@ while quantidade_arquivos_na_pasta > 1:
             shutil.move(origem,destino_naoencontrou)
         auto.hotkey('ctrl','a')
         auto.press('backspace')
-        sleep(1)
+        sleep(2)
     except:
         auto.click(x=847, y=142)
         auto.moveTo(x=1222, y=244)
         auto.mouseDown()
         auto.moveTo(x=801, y=900, duration=1)
-        sleep(4)
+        sleep(8)
         auto.mouseUp()
-        sleep(15)
+        sleep(40)
         auto.click(x=329, y=1022)
-        sleep(7)
+        sleep(4)
         if os.path.exists(origem):
             shutil.move(origem,destino_encontrou)
-        sleep(3.5)
+        sleep(4.5)
     
