@@ -3,8 +3,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 
 from pyautogui import hotkey
 from time import sleep
@@ -33,7 +31,6 @@ def google(login_google,senha_google):
     except TimeoutException:
         pass
 
-    espera = WebDriverWait(chrome,60)
     while True:
         try:
             espera.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Adicionar um usuário"]'))) # Espera e adicona novo usuario e clica
@@ -48,8 +45,8 @@ def google(login_google,senha_google):
         nome_dividido = nome_completo.split()
         primeiro_nome = nome_dividido[0]
         sobrenome = " ".join(nome_dividido[1:])
-        gmail = f'mc.{dicionario['RM']}'
-        senha = f'{dicionario['RM']}{nome_dividido[-1]}'
+        gmail = f"mc.{dicionario['RM']}"
+        senha = f"{dicionario['RM']}{nome_dividido[-1]}"
         if len(senha) == 10:
             print(f'Foi incrementado um @ na senha do {nome_completo}')
             senha = f'{senha}@'
@@ -94,35 +91,6 @@ def google(login_google,senha_google):
 
     chrome.get("chrome://newtab/")
 
-
-# Acessa a planilha
-diretorio = os.path.dirname(os.path.abspath(__file__))
-caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
-planilha = pd.read_excel(caminho_planilha)
-
-# Cria dicionario com informações do aluno e guarda em uma lista
-lista_alunos = []
-for linha in planilha.index:
-    lista_alunos.append({
-        'Nome': planilha.loc[linha,'Nome'],
-        'RM': planilha.loc[linha,'RM'],
-        'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
-        'Turma': planilha.loc[linha,'Turma']
-    })
-
-
-login_moodle = ''
-senha_moodle = ''
-
-# options = Options()
-# options.page_load_strategy = 'none'
-# service=Service(), options=options
-
-chrome = webdriver.Chrome()
-chrome.maximize_window()
-espera = WebDriverWait(chrome,20)
-
-
 def moodle(login_moodle,senha_moodle):
     chrome.get('https://educacaocabriniana.com.br/moodle/user/editadvanced.php?id=-1') # Abre Moodle
     # Loga no moodle
@@ -141,20 +109,19 @@ def moodle(login_moodle,senha_moodle):
             chrome.find_element(By.ID,'password').clear()
 
     for dicionario in lista_alunos: # Cria os registros necessarios para preencher o formulario do moodle
-        rm = f'mc.{dicionario['RM']}@madrecabrini.com.br'
+        rm = f"mc.{dicionario['RM']}@madrecabrini.com.br"
         nome_completo = dicionario['Nome']
         nome_dividido = nome_completo.split()
-        senha = f'{dicionario['RM']}{nome_dividido[-1]}'
+        senha = f"{dicionario['RM']}{nome_dividido[-1]}"
         if dicionario['Turma'][2] == 'i':
-            turma = f'Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}'
+            turma = f"Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}"
         elif dicionario['Turma'][2] == 'f':
-            turma = f'{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}'
+            turma = f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
         elif dicionario['Turma'][2] == 'm':
-            turma = f'{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}'
+            turma = f"{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}"
 
-        espera.until(EC.presence_of_element_located((By.ID,'id_username')))
-        chrome.find_element(By.ID,'id_username').send_keys(rm)
-
+        espera.until(EC.visibility_of_element_located((By.ID, "id_username"))).send_keys(str(rm))
+        
         chrome.find_element(By.XPATH, '//a[contains(., "Clique para inserir texto")]').click()
 
         chrome.find_element(By.ID,'id_newpassword').send_keys(senha)
@@ -169,6 +136,7 @@ def moodle(login_moodle,senha_moodle):
         chrome.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", criar_usuario) # Scrola até criar usuario
         espera.until(EC.element_to_be_clickable((By.ID,'id_submitbutton')))
         criar_usuario.click()
+
         try:
             espera.until(EC.presence_of_element_located((By.XPATH, '//button[contains(text(), "Adicionar um novo usuário")]')))
         except TimeoutException:
@@ -184,5 +152,103 @@ def moodle(login_moodle,senha_moodle):
             espera.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(text(), "Adicionar um novo usuário")]')))
             adicionar_um_novo_usuario.click()
 
+    turmas_moodle = {'1 e 2-i-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3157',
+                     '1 e 2-i-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3158',
+                     '3-i-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3159',
+                     '3-i-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3160',
+                     '3-i-c':'',
+                     '4-i-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3161',
+                     '4-i-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3162',
+                     '4-i-c':'',
+                     '5-i-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3163',
+                     '5-i-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3164',
+                     '5-i-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3165',
+                     '1-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3133',
+                     '1-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3137',
+                     '1-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3138',
+                     '1-f-d':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3139',
+                     '2-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3140',
+                     '2-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3141',
+                     '2-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3142',
+                     '3-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3144',
+                     '3-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3145',
+                     '3-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3146',
+                     '3-f-d':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3147',
+                     '4-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3148',
+                     '4-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3149',
+                     '4-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3150',
+                     '4-f-d':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3151',
+                     '4-f-e':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3152',
+                     '5-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3153',
+                     '5-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3154',
+                     '5-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3155',
+                     '5-f-d':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3156',
+                     '6-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3168',
+                     '6-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3167',
+                     '6-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3169',
+                     '6-f-d':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3170',
+                     '7-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3171',
+                     '7-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3172',
+                     '7-f-c':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3173',
+                     '8-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3174',
+                     '8-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3175',
+                     '9-f-a':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3176',
+                     '9-f-b':'https://educacaocabriniana.com.br/moodle/user/index.php?id=3177',
+                     '1-m-a':'',
+                     '2-m-a':'',
+                     '3-m-a':'',
+                     '3-m-b':''
+                     }
+    for dicionario in lista_alunos:
+        turma = dicionario['Turma']
+        if turma in ('1-i-a','2-i-a'):
+            turma = '1 e 2-i-a'
+        elif turma in ('1-i-b','2-i-b'):
+            turma = '1 e 2-i-b'
+
+        if dicionario['Turma'][2] == 'i':
+            turma_para_filtro = f"Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}"
+        elif dicionario['Turma'][2] == 'f':
+            turma_para_filtro = f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
+        elif dicionario['Turma'][2] == 'm':
+            turma_para_filtro = f"{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}"
+
+        link_para_turma = turmas_moodle[turma]
+        chrome.get(link_para_turma)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @value='Inscrever usuários']"))).click()
+        espera.until(EC.visibility_of_element_located((By.XPATH, "//input[@data-fieldtype='autocomplete']"))).send_keys(str(dicionario['RM']))
+        try:
+            espera.until(EC.element_to_be_clickable((By.XPATH, f"//li[.//span[text()='{dicionario['Nome']} {turma_para_filtro}']]"))).click()
+        except TimeoutException:
+            print(f'O aluno {dicionario['Nome']} não foi adicionado a turma')
+            pass
+        sleep(5)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Inscrever usuários selecionados e coortes']"))).click()
+        sleep(3)
+        
+
+# Acessa a planilha
+diretorio = os.path.dirname(os.path.abspath(__file__))
+caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
+planilha = pd.read_excel(caminho_planilha)
+
+# Cria dicionario com informações do aluno e guarda em uma lista
+lista_alunos = []
+for linha in planilha.index:
+    lista_alunos.append({
+        'Nome': planilha.loc[linha,'Nome'],
+        'RM': planilha.loc[linha,'RM'],
+        'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
+        'Turma': planilha.loc[linha,'Turma']
+    })
+
+login_google = ''
+senha_google = ''
+login_moodle = ''
+senha_moodle = ''
+
+chrome = webdriver.Chrome()
+chrome.maximize_window()
+espera = WebDriverWait(chrome,8)
 
 moodle(login_moodle,senha_moodle)
