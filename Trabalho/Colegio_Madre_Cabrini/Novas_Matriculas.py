@@ -3,6 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 from pyautogui import hotkey
 from time import sleep
@@ -273,12 +275,95 @@ def moodle(login_moodle,senha_moodle):
                 
     chrome.get("chrome://newtab/")
 
-def ionica(login_ionica,senha_ionica):
+def ionica(login_ionica, senha_ionica):
     chrome.get('https://madrecabrinisp.souionica.com.br/school/6d7a8ad2-16c4-11ea-8c78-bbc55ddf4924/students')
 
+    # Loga na plataforma Iônica
     espera.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'input[name="email"]'))).send_keys(login_ionica)
     chrome.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
-    sleep(20)
+    espera.until(EC.visibility_of_element_located((By.ID, "password"))).send_keys(senha_ionica)
+    chrome.find_element(By.ID, 'next').click()
+
+    pendencias_cadastrais = 0 # Para executar somente uma vez caso apareça a mensagem apos clicar em adicionar ususario
+
+    # Cria os dados do aluno para preencher o formulario
+    for dicionario in lista_alunos: 
+        nome_completo = dicionario['Nome']
+        rm = str(dicionario['RM'])
+        nome_dividido = nome_completo.split()
+        primeiro_nome = nome_dividido[0]
+        sobrenome = " ".join(nome_dividido[1:])
+        gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
+        senha = f"{dicionario['RM']}{nome_dividido[-1]}"
+
+        # Abre o formulario para adiconar aluno
+        botao_formulario = espera.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button[aria-label="SpeedDial openIcon example"]')))
+        chrome.execute_script("arguments[0].click();", botao_formulario)
+        espera.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'button[title="Novo(a) estudante"]'))).click()
+
+        # Pular a mensagem caso apareça
+        if pendencias_cadastrais == 0:
+            try:
+                espera.until(EC.element_to_be_clickable((By.XPATH, '//button[span/span[contains(text(),"Entendi, mas quero continuar")]]'))).click()
+                pendencias_cadastrais = 1
+            except TimeoutException:
+                pass
+
+        # Preenche o formulario e adiciona o aluno
+        espera.until(EC.visibility_of_element_located((By.NAME, "name"))).send_keys(primeiro_nome)
+        chrome.find_element(By.NAME,'lastname').send_keys(sobrenome)
+        chrome.find_element(By.NAME,'ra').send_keys(rm)
+        chrome.find_element(By.NAME,'username').send_keys(gmail)
+        chrome.find_element(By.NAME,'email').send_keys(gmail)
+        chrome.find_element(By.NAME,'password').send_keys(senha)
+        chrome.find_element(By.NAME,'repeatPassword').send_keys(senha)
+
+        # Aceita os cookies
+        try:
+            chrome.find_element(By.ID,'onetrust-accept-btn-handler').click()
+        except:
+            pass
+
+        # Adiciona o usuário
+        chrome.find_element(By.XPATH, "//button[span[text()='Cadastrar']]").click()
+
+        # Espera o fromulario sumir, se acabar o tempo e nao sumir o aluno nao foi adicionado
+        try:
+            espera.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, 'div.MuiDialog-paper')))
+        except TimeoutException:
+            print(f'Não foi possivel adicionar o aluno {dicionario['Nome']}')
+            chrome.get('https://madrecabrinisp.souionica.com.br/school/6d7a8ad2-16c4-11ea-8c78-bbc55ddf4924/students')
+        else:
+            # Procura o aluno no filtro e seleciona
+            espera.until(EC.element_to_be_clickable((By.NAME,'search'))).send_keys(rm)
+            espera.until(EC.visibility_of_element_located((By.XPATH, f"//span[text()='{rm}']"))).click()
+
+            # Clica em adicionar Turma
+            botao = espera.until(EC.presence_of_element_located((By.XPATH, "//span[text()='Adicionar a turma']/..")))
+            chrome.execute_script("arguments[0].click();", botao)
+            espera.until(EC.element_to_be_clickable((By.ID, "__button__button"))).click()
+
+            # Cria filtro para Decidir qual é a turma do aluno
+            if dicionario['Turma'][2] == 'i':
+                turma_para_filtro = f'Infantil {dicionario['Turma'][0]} {dicionario['Turma'][4].upper()} '
+            elif dicionario['Turma'][2] == 'f':
+                turma_para_filtro = f'{dicionario['Turma'][0]}º ano {dicionario['Turma'][4].upper()}'
+            elif dicionario['Turma'][2] == 'm':
+                turma_para_filtro = f'{dicionario['Turma'][0]}ª série {dicionario['Turma'][4].upper()}'
+
+            # Clica na turma e adiciona
+            try:
+                turma_a_selecionar = chrome.find_element(By.XPATH, f'//span[contains(text(), "{turma_para_filtro}")]')
+            except:
+                print(f'O aluno {dicionario['Nome']} ja existe')
+                chrome.get('https://madrecabrinisp.souionica.com.br/school/6d7a8ad2-16c4-11ea-8c78-bbc55ddf4924/students')
+                pendencias_cadastrais = 0
+                continue
+            chrome.execute_script("arguments[0].click();", turma_a_selecionar)
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Salvar']]"))).click()
+
+            # Salva
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space(text())='Salvar']"))).click()
 
 
 # Acessa a planilha
@@ -293,8 +378,7 @@ for linha in planilha.index:
         'Nome': planilha.loc[linha,'Nome'],
         'RM': planilha.loc[linha,'RM'],
         'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
-        'Turma': planilha.loc[linha,'Turma']
-    })
+        'Turma': planilha.loc[linha,'Turma']})
 
 login_google = ''
 senha_google = ''
@@ -307,9 +391,9 @@ senha_ionica = ''
 
 chrome = webdriver.Chrome()
 chrome.maximize_window()
-espera = WebDriverWait(chrome,12)
+espera = WebDriverWait(chrome,15)
 espera_media = WebDriverWait(chrome,15)
 
-# google(login_google,senha_google)
-# moodle(login_moodle,senha_moodle)
+google(login_google,senha_google)
+moodle(login_moodle,senha_moodle)
 ionica(login_ionica,senha_ionica)
