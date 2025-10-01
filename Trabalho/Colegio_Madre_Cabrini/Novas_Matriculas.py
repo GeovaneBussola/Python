@@ -270,8 +270,17 @@ def moodle(login_moodle,senha_moodle):
         else:
             for indice in range(len(turmas_moodle[turma])):
                 adiciona_turma(dicionario,indice)
+                
+    chrome.get("chrome://newtab/")
 
-        
+def ionica(login_ionica,senha_ionica):
+    chrome.get('https://madrecabrinisp.souionica.com.br/school/6d7a8ad2-16c4-11ea-8c78-bbc55ddf4924/students')
+
+    espera.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'input[name="email"]'))).send_keys(login_ionica)
+    chrome.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+    sleep(20)
+
+
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
 caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
@@ -289,13 +298,18 @@ for linha in planilha.index:
 
 login_google = ''
 senha_google = ''
+
 login_moodle = ''
 senha_moodle = ''
+
+login_ionica = ''
+senha_ionica = ''
 
 chrome = webdriver.Chrome()
 chrome.maximize_window()
 espera = WebDriverWait(chrome,12)
 espera_media = WebDriverWait(chrome,15)
 
-google(login_google,senha_google)
-moodle(login_moodle,senha_moodle)
+# google(login_google,senha_google)
+# moodle(login_moodle,senha_moodle)
+ionica(login_ionica,senha_ionica)
