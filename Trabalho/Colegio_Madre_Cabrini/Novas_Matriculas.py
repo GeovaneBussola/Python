@@ -5,7 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-
 from pyautogui import hotkey
 from time import sleep
 import pandas as pd
@@ -16,6 +15,7 @@ import pyperclip
 def google(login_google,senha_google):
     chrome.get('https://admin.google.com/?utm_source=app_launcher&pli=1&rapt=AEjHL4OWBlzd2dG79Ew2vQtTAXvlSwUj3nIC5fAaM0cW2SZnexcKkPbws4BFKBPKEvWOlWytbGD8fHZ8PyeQmZtNgiiV6xFtJsw4z390jsGjpNQuYTdg67I')
 
+    # Loga no google
     try:
         espera.until(EC.presence_of_element_located((By.XPATH,'//*[@id="identifierId"]')))
         pyperclip.copy(login_google)
@@ -35,7 +35,7 @@ def google(login_google,senha_google):
 
     while True:
         try:
-            espera_media.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Adicionar um usuário"]'))) # Espera adiciona novo usuario e clica
+            espera.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Adicionar um usuário"]'))) 
             chrome.find_element(By.XPATH, '//span[text()="Adicionar um usuário"]').click()
             break
         except TimeoutException:
@@ -275,7 +275,7 @@ def moodle(login_moodle,senha_moodle):
                 
     chrome.get("chrome://newtab/")
 
-def ionica(login_ionica, senha_ionica):
+def ionica(login_ionica,senha_ionica):
     chrome.get('https://madrecabrinisp.souionica.com.br/school/6d7a8ad2-16c4-11ea-8c78-bbc55ddf4924/students')
 
     # Loga na plataforma Iônica
@@ -365,6 +365,85 @@ def ionica(login_ionica, senha_ionica):
             # Salva
             espera.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space(text())='Salvar']"))).click()
 
+def matific(login_matific,senha_matific):
+    chrome.get('https://www.matific.com/bra/pt-br/teachers/class-management/manage-all-students/83ca4de9-90c3-47af-8487-2e5f5c5a2578')
+
+    #Loga na Matific
+    espera.until(EC.element_to_be_clickable((By.ID,'username-input'))).send_keys(login_matific)
+    chrome.find_element(By.ID,'login-button').click()
+    espera.until(EC.element_to_be_clickable((By.ID,'password-input'))).send_keys(senha_matific)
+    chrome.find_element(By.ID,'login-button').click()
+    espera.until(EC.element_to_be_clickable((By.ID,'c-accept-btn'))).click()
+    for dicionario in lista_alunos:
+        # Pula se o aluno não precisa ser adicionado na matific
+        if dicionario['Turma'][2] == 'm' or int(dicionario['Turma'][0]) > 5 or dicionario['Turma'][2] == 'i' and int(dicionario['Turma'][0]) < 4:
+            continue
+        
+        # Cria texto para encontrar a turma do aluno
+        if dicionario['Turma'][2] == 'i':
+            turma_para_entrar = f"Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}"
+        elif dicionario['Turma'][2] == 'f':
+            turma_para_entrar= f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
+
+        # Cria dados para preencher o formulario
+        nome_completo = dicionario['Nome']
+        nome_dividido = nome_completo.split()
+        primeiro_nome = nome_dividido[0]
+        sobrenome = " ".join(nome_dividido[1:])
+        gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
+        senha = f"{dicionario['RM']}{nome_dividido[-1]}"
+
+        # Seleciona a turma correta para entrar
+        espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
+        botao = espera.until(EC.presence_of_element_located((By.ID,'toggleButton-0')))
+        chrome.execute_script("arguments[0].click();", botao)
+        botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//li[@role='menuitem' and contains(normalize-space(text()), '{turma_para_entrar}')]")))
+        chrome.execute_script("arguments[0].click();", botao)
+        sleep(10)
+        espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[aria-label='Adicionar alunos']"))).click()
+
+        # Adiciona o aluno na turma, somente com nome e sobrenome
+        espera.until(EC.element_to_be_clickable((By.ID,'first_name-0'))).send_keys(f'{primeiro_nome}01')
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='last_name']"))).send_keys(sobrenome)
+        espera.until(EC.element_to_be_clickable((By.ID,'btn-create-students'))).click()
+
+        espera.until(EC.presence_of_element_located((By.XPATH, f"//tr[.//div[@class='cell-text' and normalize-space(text())='{primeiro_nome}01']]"))) # Espera o nome aparecer
+
+        # Localiza todas as linhas da tabela
+        linhas = chrome.find_elements(By.CSS_SELECTOR, "tr[mtcdstablerow]")
+        for linha in linhas:
+            try:
+                # Clica nos 3 pontinhos do aluno que corresponde ao nome e sobrenome
+                colunas = linha.find_elements(By.CSS_SELECTOR, "td div.cell-text")
+                celula_nome = colunas[0].text.strip()
+                celula_sobrenome = colunas[1].text.strip()
+                if celula_nome == f'{primeiro_nome}01' and celula_sobrenome == sobrenome:
+                    linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button").click()
+                    break
+            except:
+                continue
+        
+        # Editar usuario
+        itens_menu = espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
+        for item in itens_menu:
+            try:
+                label = item.find_element(By.CSS_SELECTOR, ".cds--menu-item__label")
+                if "Editar detalhes do aluno" in label.text.strip():
+                    chrome.execute_script("arguments[0].click();", item)
+                    break
+            except:
+                continue
+
+        # Preenche o formulario
+        espera.until(EC.element_to_be_clickable((By.ID,"firstName"))).clear()
+        chrome.find_element(By.ID,"firstName").send_keys(primeiro_nome)
+        espera.until(EC.element_to_be_clickable((By.ID,"username"))).clear()
+        chrome.find_element(By.ID,"username").send_keys(gmail)
+        espera.until(EC.element_to_be_clickable((By.ID,"tempPassword"))).clear()
+        chrome.find_element(By.ID,"tempPassword").send_keys(senha)
+        espera.until(EC.element_to_be_clickable((By.ID,"btn-save"))).click()
+    sleep(10)
+
 
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
@@ -389,11 +468,14 @@ senha_moodle = ''
 login_ionica = ''
 senha_ionica = ''
 
+login_matific = ''
+senha_matific = ''
+
 chrome = webdriver.Chrome()
 chrome.maximize_window()
 espera = WebDriverWait(chrome,15)
-espera_media = WebDriverWait(chrome,15)
 
 google(login_google,senha_google)
 moodle(login_moodle,senha_moodle)
-ionica(login_ionica,senha_ionica)
+#ionica(login_ionica,senha_ionica)
+matific(login_matific,senha_matific)
