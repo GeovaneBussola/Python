@@ -365,6 +365,8 @@ def ionica(login_ionica,senha_ionica):
             # Salva
             espera.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space(text())='Salvar']"))).click()
 
+    chrome.get("chrome://newtab/")
+
 def matific(login_matific,senha_matific):
     chrome.get('https://www.matific.com/bra/pt-br/teachers/class-management/manage-all-students/83ca4de9-90c3-47af-8487-2e5f5c5a2578')
 
@@ -399,7 +401,7 @@ def matific(login_matific,senha_matific):
         chrome.execute_script("arguments[0].click();", botao)
         botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//li[@role='menuitem' and contains(normalize-space(text()), '{turma_para_entrar}')]")))
         chrome.execute_script("arguments[0].click();", botao)
-        sleep(10)
+        sleep(15)
         espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[aria-label='Adicionar alunos']"))).click()
 
         # Adiciona o aluno na turma, somente com nome e sobrenome
@@ -442,7 +444,37 @@ def matific(login_matific,senha_matific):
         espera.until(EC.element_to_be_clickable((By.ID,"tempPassword"))).clear()
         chrome.find_element(By.ID,"tempPassword").send_keys(senha)
         espera.until(EC.element_to_be_clickable((By.ID,"btn-save"))).click()
-    sleep(10)
+
+        # Verifica se o luno ja existe, se existe ele exclui
+        try:
+            espera.until(EC.invisibility_of_element((By.ID,'btn-cancel')))
+        except TimeoutException:
+            chrome.find_element(By.ID,'btn-cancel').click()
+            espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "td div.cell-text")))
+            for linha in linhas:
+                try:
+                    colunas = linha.find_elements(By.CSS_SELECTOR, "td div.cell-text")
+                    celula_nome = colunas[0].text.strip()
+                    celula_sobrenome = colunas[1].text.strip()
+                    if celula_nome == f'{primeiro_nome}01' and celula_sobrenome == sobrenome:
+                        linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button").click()
+                        break
+                except:
+                    continue
+            for item in itens_menu:
+                try:
+                    label = item.find_element(By.CSS_SELECTOR, ".cds--menu-item__label")
+                    if "Excluir conta" in label.text.strip():
+                        chrome.execute_script("arguments[0].click();", item)
+                        break
+                except:
+                    continue
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//span[normalize-space(text())='Confirmo que desejo excluir permanentemente esta conta']"))).click()
+            chrome.find_element(By.ID,'btn-delete-students').click()
+            espera.until(EC.invisibility_of_element((By.ID,'btn-delete-students')))
+            print(f'Não foi possivel adicionar o aluno {nome_completo} na Matific')
+    sleep(8)
+    chrome.get("chrome://newtab/")
 
 
 # Acessa a planilha
@@ -475,7 +507,7 @@ chrome = webdriver.Chrome()
 chrome.maximize_window()
 espera = WebDriverWait(chrome,15)
 
-google(login_google,senha_google)
-moodle(login_moodle,senha_moodle)
+#google(login_google,senha_google)
+#moodle(login_moodle,senha_moodle)
 #ionica(login_ionica,senha_ionica)
 matific(login_matific,senha_matific)
