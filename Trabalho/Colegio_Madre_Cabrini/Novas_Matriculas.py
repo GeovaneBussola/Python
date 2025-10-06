@@ -3,8 +3,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from pyautogui import hotkey
 from time import sleep
 import pandas as pd
@@ -476,10 +474,104 @@ def matific(login_matific,senha_matific):
     sleep(8)
     chrome.get("chrome://newtab/")
 
+def cambridge(login_cambridge,senha_cambridge):
+    def esperar_erros_usernames(chrome):
+        def condicao(driver):
+            linhas = driver.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
+            for linha in linhas:
+                # Tenta capturar o erro de username
+                try:
+                    erro = linha.find_element(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
+                    return True  # Pelo menos um erro apareceu
+                except:
+                    continue
+            return False  # Nenhum erro ainda
+        return WebDriverWait(chrome, 20).until(condicao)
+    
+    chrome.get('https://www.cambridgeone.org/admin/admin/org_cup_z4vVnokQ78pMXTs8/class')
+
+    # Loga na Cambridge
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='text' and contains(@placeholder, 'username')]"))).send_keys(login_cambridge)
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password' and contains(@placeholder,'password')]"))).send_keys(senha_cambridge)
+    chrome.find_element(By.XPATH, "//input[@type='submit' and contains(@value,'Log')]").click()
+    
+    # Take me back
+    try:
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'back home')]"))).click()
+    except TimeoutException:
+        pass
+    
+    # Abre a aba para descarregar a planilha
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[text()='Students']]"))).click()
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Manage students']"))).click()
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Add new students to classes']"))).click()
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//label[@for='child-radio']"))).click()
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='typeSelect-4']"))).click()
+    
+    # Adiciona os dados na planilha da cambridge
+    primeiro_nome1 = []
+    sobrenome1 = []
+    username1 = []
+    passworld1 = []
+    chave_classe = []
+    for index in planilha.index:
+        primeiro_nome1.append(planilha.loc[index,'Nome'])
+        sobrenome1.append(planilha.loc[index,'Nome'])
+        username1.append()
+    dados = {
+        "'Student's First name'":'',
+        "'Student's Last name'":'',
+        'Username':'',
+        'Password':'',
+        'Class key':''
+
+    }
+
+    # Upload da planilha csv
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
+    chrome.execute_script("""document.querySelector('input[type="file"]').style.display = 'block';""")
+    input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
+    input_upload.send_keys(caminho_planilha_cambridge)
+
+    esperar_erros_usernames(chrome)
+    linhas = chrome.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
+    usernames_duplicados = []
+
+    for linha in linhas:
+        # Tenta pegar o número da linha, se existir
+        numero_linha_elem = linha.find_elements(By.XPATH, ".//span[contains(@class,'error-text')]")
+        numero_linha = numero_linha_elem[0].text.strip() if numero_linha_elem else "N/A"
+
+        # Verifica se existe erro no input de username
+        erro_elem = linha.find_elements(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
+        if erro_elem:
+            username_input = linha.find_element(By.XPATH, ".//input[@type='text' and contains(@id,'userName')]")
+            username = username_input.get_attribute("value")
+            usernames_duplicados.append((numero_linha, username))
+
+    # Cria planilha nova para fazer o upload na cambridge
+    planilha_cambridge = pd.read_csv(caminho_planilha_cambridge)
+    print(planilha_cambridge.columns)
+    colunas_originais = planilha_cambridge.columns.tolist() # Salva as colunas padrao antes de renomear elas
+    planilha_cambridge.columns = [c.strip().replace("'", "").replace(" ", "_") for c in planilha_cambridge.columns] # Renomeia as colunas para o pandas conseguir ler a coluna Nome
+    linhas_para_remover = [u[1] for u in usernames_duplicados] # Pega somente o username dos alunos que estao na lista criada anteriormente
+    planilha_sem_duplicados = planilha_cambridge[~planilha_cambridge['Username'].isin(linhas_para_remover)] # remove as linhas da planilha onde estao os alunos que ja exitem na cambridge
+    planilha_sem_duplicados.columns = colunas_originais # renomei a planilha para o padrão
+    novo_caminho = os.path.join(diretorio, 'cambridge_sem_duplicados.csv') 
+    planilha_sem_duplicados.to_csv(novo_caminho, index=False) # Cria a planilha nova sem os usuarios que ja estavam na cambridge
+
+    # Printa o nome do aluno que ja existe
+    for linha in planilha.index:
+        for aluno in linhas_para_remover:
+                if str(planilha.loc[linha,'RM']) == str(aluno[2:]):
+                    aluno_que_ja_existe = planilha.loc[linha,'Nome']
+                    print(f'O aluno {aluno_que_ja_existe} ja existe') 
+    sleep(999)
 
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
 caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
+caminho_planilha_cambridge = os.path.join(diretorio,'cambridge.csv')
 planilha = pd.read_excel(caminho_planilha)
 
 # Cria dicionario com informações do aluno e guarda em uma lista
@@ -503,11 +595,15 @@ senha_ionica = ''
 login_matific = ''
 senha_matific = ''
 
+login_cambridge = ''
+senha_cambridge = ''
+
 chrome = webdriver.Chrome()
 chrome.maximize_window()
-espera = WebDriverWait(chrome,15)
+espera = WebDriverWait(chrome,30)
 
 #google(login_google,senha_google)
 #moodle(login_moodle,senha_moodle)
 #ionica(login_ionica,senha_ionica)
-matific(login_matific,senha_matific)
+#matific(login_matific,senha_matific)
+cambridge(login_cambridge,senha_cambridge)
