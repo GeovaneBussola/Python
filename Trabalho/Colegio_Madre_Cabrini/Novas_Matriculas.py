@@ -490,6 +490,8 @@ def cambridge(login_cambridge,senha_cambridge):
     
     chrome.get('https://www.cambridgeone.org/admin/admin/org_cup_z4vVnokQ78pMXTs8/class')
 
+    caminho_planilha_cambridge = os.path.join(diretorio,'cambridge.csv')
+
     # Loga na Cambridge
     espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='text' and contains(@placeholder, 'username')]"))).send_keys(login_cambridge)
     espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password' and contains(@placeholder,'password')]"))).send_keys(senha_cambridge)
@@ -508,24 +510,63 @@ def cambridge(login_cambridge,senha_cambridge):
     espera.until(EC.element_to_be_clickable((By.XPATH, "//label[@for='child-radio']"))).click()
     espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='typeSelect-4']"))).click()
     
+    # chaves das turmas
+    classkeys =     {'1-f-a':'36E7-G269',
+                     '1-f-b':'9xpr-xBud',
+                     '1-f-c':'fe93-RHY3',
+                     '1-f-d':'MqAW-nVQt',
+                     '2-f-a':'6XMs-PLt9',
+                     '2-f-b':'yFXn-J929',
+                     '2-f-c':'vorb-kDKf',
+                     '2-f-d':'sQMm-MCpz',
+                     '3-f-a':'BKrq-3zoG',
+                     '3-f-b':'VmEG-mZrv',
+                     '3-f-c':'KzqQ-KXLE',
+                     '3-f-d':'7D37-V86W',
+                     '4-f-a':'qHdP-46Ky',
+                     '4-f-b':'yF2y-kF9C',
+                     '4-f-c':'LEFb-m3D3',
+                     '4-f-d':'XRn4-n864',
+                     '4-f-e':'Uv6N-Rixv',
+                     '5-f-a':'2ku3-BDx8',
+                     '5-f-b':'fBLo-KnAX',
+                     '5-f-c':'QocB-s47d',
+                     '5-f-d':'QLN7-iHqT',
+                     '6-f-a':'F2gv-M26s',
+                     '6-f-b':'Jm7B-D2FR',
+                     '6-f-c':'zQh9-BRez',
+                     '6-f-d':'bfL7-TEJd',
+                     '7-f-a':'Tzt6-9p9J',
+                     '7-f-b':'79eD-2jvz',
+                     '7-f-c':'Cm2K-3K28',
+                     '8-f-a':'xuq6-onKi',
+                     '8-f-b':'yb9f-9rg6',
+                     '9-f-a':'e6M2-py32',
+                     '9-f-b':'fsU6-ed6E',
+                     }
+    
     # Adiciona os dados na planilha da cambridge
     primeiro_nome1 = []
     sobrenome1 = []
-    username1 = []
-    passworld1 = []
-    chave_classe = []
-    for index in planilha.index:
-        primeiro_nome1.append(planilha.loc[index,'Nome'])
-        sobrenome1.append(planilha.loc[index,'Nome'])
-        username1.append()
-    dados = {
-        "'Student's First name'":'',
-        "'Student's Last name'":'',
-        'Username':'',
-        'Password':'',
-        'Class key':''
-
-    }
+    nome_de_usuario1 = []
+    senha1 = []
+    chave_classe1 = []
+    for dicionario in lista_alunos:
+        nome_completo_dividido = dicionario['Nome'].split()
+        primeiro_nome1.append(nome_completo_dividido[0])
+        sobrenome1.append(" ".join(nome_completo_dividido[1:]))
+        nome_de_usuario1.append(f"mc{dicionario['RM']}")
+        senha1.append(f"{dicionario['RM']}{nome_completo_dividido[-1]}")
+        chave_classe1.append(classkeys[dicionario['Turma']])
+    dados = pd.DataFrame({
+        "Student's First name":primeiro_nome1,
+        "Student's Last name":sobrenome1,
+        'Username':nome_de_usuario1,
+        'Password':senha1,
+        'Class key':chave_classe1
+    })
+    dados.to_csv(caminho_planilha_cambridge, index=False)
+    planilha_cambridge = pd.read_csv(caminho_planilha_cambridge)
 
     # Upload da planilha csv
     espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
@@ -533,45 +574,63 @@ def cambridge(login_cambridge,senha_cambridge):
     input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
     input_upload.send_keys(caminho_planilha_cambridge)
 
-    esperar_erros_usernames(chrome)
-    linhas = chrome.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
-    usernames_duplicados = []
+    # Tenta esperar o botao de adicionar contas ficar clicavel, se não ficar ele cria outra planilha sem as contas que dao erro
+    try:
+        espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']")))
+        sleep(999)
+    except TimeoutException:
+        # Cria uma lista com numero da linha e nome de usuario dos usuarios que ja estao no cambridge
+        esperar_erros_usernames(chrome)
+        linhas = chrome.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
+        usernames_duplicados = []
+        for linha in linhas:
+            # Tenta pegar o número da linha, se existir
+            numero_linha_elem = linha.find_elements(By.XPATH, ".//span[contains(@class,'error-text')]")
+            numero_linha = numero_linha_elem[0].text.strip() if numero_linha_elem else "N/A"
+            # Verifica se existe erro no input de username
+            erro_elem = linha.find_elements(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
+            if erro_elem:
+                username_input = linha.find_element(By.XPATH, ".//input[@type='text' and contains(@id,'userName')]")
+                username = username_input.get_attribute("value")
+                usernames_duplicados.append((numero_linha, username))
 
-    for linha in linhas:
-        # Tenta pegar o número da linha, se existir
-        numero_linha_elem = linha.find_elements(By.XPATH, ".//span[contains(@class,'error-text')]")
-        numero_linha = numero_linha_elem[0].text.strip() if numero_linha_elem else "N/A"
+        # Cria planilha sem duplicatas para fazer o upload na cambridge
+        colunas_originais = planilha_cambridge.columns.tolist() # Salva as colunas padrao antes de renomear elas
+        planilha_cambridge.columns = [c.strip().replace("'", "").replace(" ", "_") for c in planilha_cambridge.columns] # Renomeia as colunas para o pandas conseguir ler a coluna Nome
+        linhas_para_remover = [u[1] for u in usernames_duplicados] # Pega somente o username dos alunos que estao na lista criada anteriormente
+        planilha_sem_duplicados = planilha_cambridge[~planilha_cambridge['Username'].isin(linhas_para_remover)] # remove as linhas da planilha onde estao os alunos que ja exitem na cambridge
+        planilha_sem_duplicados.columns = colunas_originais # renomei a planilha para o padrão
+        novo_caminho = os.path.join(diretorio, 'cambridge_sem_duplicados.csv') 
+        planilha_sem_duplicados.to_csv(novo_caminho, index=False) # Cria a planilha nova sem os usuarios que ja estavam na cambridge
 
-        # Verifica se existe erro no input de username
-        erro_elem = linha.find_elements(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
-        if erro_elem:
-            username_input = linha.find_element(By.XPATH, ".//input[@type='text' and contains(@id,'userName')]")
-            username = username_input.get_attribute("value")
-            usernames_duplicados.append((numero_linha, username))
+        # Printa o nome do aluno que ja existe
+        for linha in planilha.index:
+            for aluno in linhas_para_remover:
+                try:
+                    if str(planilha.loc[linha,'RM']) == str(aluno[2:]):
+                        aluno_que_ja_existe = planilha.loc[linha,'Nome']
+                        print(f"O aluno {aluno_que_ja_existe} já existe")
+                except KeyError:
+                    pass
+        
+        # Faz o upload da nova planilha
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
+        chrome.execute_script("""document.querySelector('input[type="file"]').style.display = 'block';""")
+        input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
+        input_upload.send_keys(novo_caminho)
 
-    # Cria planilha nova para fazer o upload na cambridge
-    planilha_cambridge = pd.read_csv(caminho_planilha_cambridge)
-    print(planilha_cambridge.columns)
-    colunas_originais = planilha_cambridge.columns.tolist() # Salva as colunas padrao antes de renomear elas
-    planilha_cambridge.columns = [c.strip().replace("'", "").replace(" ", "_") for c in planilha_cambridge.columns] # Renomeia as colunas para o pandas conseguir ler a coluna Nome
-    linhas_para_remover = [u[1] for u in usernames_duplicados] # Pega somente o username dos alunos que estao na lista criada anteriormente
-    planilha_sem_duplicados = planilha_cambridge[~planilha_cambridge['Username'].isin(linhas_para_remover)] # remove as linhas da planilha onde estao os alunos que ja exitem na cambridge
-    planilha_sem_duplicados.columns = colunas_originais # renomei a planilha para o padrão
-    novo_caminho = os.path.join(diretorio, 'cambridge_sem_duplicados.csv') 
-    planilha_sem_duplicados.to_csv(novo_caminho, index=False) # Cria a planilha nova sem os usuarios que ja estavam na cambridge
+    espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']"))).click()
+    sleep(18)
+    chrome.get("chrome://newtab/")
+    if os.path.exists(novo_caminho):
+        os.remove(novo_caminho)
+    if os.path.exists(caminho_planilha):
+        os.remove(caminho_planilha_cambridge)
 
-    # Printa o nome do aluno que ja existe
-    for linha in planilha.index:
-        for aluno in linhas_para_remover:
-                if str(planilha.loc[linha,'RM']) == str(aluno[2:]):
-                    aluno_que_ja_existe = planilha.loc[linha,'Nome']
-                    print(f'O aluno {aluno_que_ja_existe} ja existe') 
-    sleep(999)
 
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
 caminho_planilha = os.path.join(diretorio,'new_matricula.xlsx')
-caminho_planilha_cambridge = os.path.join(diretorio,'cambridge.csv')
 planilha = pd.read_excel(caminho_planilha)
 
 # Cria dicionario com informações do aluno e guarda em uma lista
