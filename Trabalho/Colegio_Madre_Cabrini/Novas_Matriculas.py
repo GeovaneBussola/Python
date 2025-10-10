@@ -669,8 +669,8 @@ for linha in planilha.index:
         'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
         'Turma': planilha.loc[linha,'Turma']})
 
-login_google = 'geovane.bussola@madrecabrini.com.br'
-senha_google = 'g61050548@'
+login_google = ''
+senha_google = ''
 
 login_moodle = ''
 senha_moodle = ''
