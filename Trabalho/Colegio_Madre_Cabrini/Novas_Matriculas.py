@@ -3,38 +3,34 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from pyautogui import hotkey
 from time import sleep
 import pandas as pd
 import os
-import pyperclip
 
 
 def google(login_google,senha_google):
     chrome.get('https://admin.google.com/?utm_source=app_launcher&pli=1&rapt=AEjHL4OWBlzd2dG79Ew2vQtTAXvlSwUj3nIC5fAaM0cW2SZnexcKkPbws4BFKBPKEvWOlWytbGD8fHZ8PyeQmZtNgiiV6xFtJsw4z390jsGjpNQuYTdg67I')
 
     # Loga no google
-    try:
-        espera.until(EC.presence_of_element_located((By.XPATH,'//*[@id="identifierId"]')))
-        pyperclip.copy(login_google)
-        hotkey('ctrl','v')
-        chrome.find_element(By.XPATH,'//*[@id="identifierNext"]/div/button/span').click()
+    try: # login
+        espera.until(EC.element_to_be_clickable((By.ID, "identifierId"))).send_keys(login_google)
+        botao = espera.until(EC.element_to_be_clickable((By.XPATH, "//button//span[contains(text(),'Avançar')]")))
+        chrome.execute_script("arguments[0].click();", botao)
     except TimeoutException:
         pass
 
-    try:
-        pyperclip.copy(senha_google)
-        espera.until(EC.presence_of_element_located((By.XPATH,'//*[@id="password"]/div[1]/div/div[1]/input')))
-        sleep(1)
-        hotkey('ctrl','v')
-        chrome.find_element(By.XPATH,'//*[@id="passwordNext"]/div/button/span').click()
+    try: # Senha
+        espera.until(EC.element_to_be_clickable((By.NAME, "Passwd"))).send_keys(senha_google)
+        botao = espera.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Avançar']")))
+        chrome.execute_script(f"arguments[0].click();", botao)
     except TimeoutException:
         pass
 
+    # Abre o formulario
     while True:
         try:
-            espera.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Adicionar um usuário"]'))) 
-            chrome.find_element(By.XPATH, '//span[text()="Adicionar um usuário"]').click()
+            botao = WebDriverWait(chrome,70).until(EC.presence_of_element_located((By.XPATH, '//span[text()="Adicionar um usuário"]')))
+            chrome.execute_script("arguments[0].click();", botao)
             break
         except TimeoutException:
             chrome.refresh()
@@ -53,29 +49,30 @@ def google(login_google,senha_google):
             senha = f'{senha}@'
 
         # Espera carregar campos de preenchimento e preenche
-        espera.until(EC.visibility_of_element_located((By.XPATH, '//input[@aria-label="Nome *"]')))
-        chrome.find_element(By.XPATH, '//input[@aria-label="Nome *"]').send_keys(primeiro_nome) # Preenche o Nome
+        campo_nome = espera.until(EC.presence_of_element_located((By.XPATH, '//input[@aria-label="Nome *"]')))
+        chrome.execute_script(f"arguments[0].value = '{primeiro_nome}';", campo_nome)
 
-        chrome.find_element(By.XPATH,'//input[@aria-label="Sobrenome *"]').send_keys(sobrenome) # Preenche o Sobrenome
+        campo_sobrenome = espera.until(EC.presence_of_element_located((By.XPATH,'//input[@aria-label="Sobrenome *"]')))
+        chrome.execute_script(f"arguments[0].value = '{sobrenome}';", campo_sobrenome)
 
-        chrome.find_element(By.XPATH,'//input[@aria-label="E-mail principal *"]').send_keys(gmail) # Preenche o Gmail
+        campo_gmail = espera.until(EC.presence_of_element_located((By.XPATH,'//input[@aria-label="E-mail principal *"]')))
+        chrome.execute_script(f"arguments[0].value = '{gmail}';", campo_gmail)
 
-        espera.until(EC.element_to_be_clickable((By.XPATH,'//span[text()="Gerenciar a senha, a unidade organizacional e a foto do perfil do usuário"]')))
-        chrome.find_element(By.XPATH,'//span[text()="Gerenciar a senha, a unidade organizacional e a foto do perfil do usuário"]').click() # Abre gerenciar senha
+        botao = espera.until(EC.presence_of_element_located((By.XPATH,'//span[text()="Gerenciar a senha, a unidade organizacional e a foto do perfil do usuário"]')))
+        chrome.execute_script("arguments[0].click();", botao)
 
-        espera.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="radio"][value="create"]')))
-        chrome.find_element(By.CSS_SELECTOR, 'input[type="radio"][value="create"]').click() # Criar uma senha
+        botao = espera.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="radio"][value="create"]')))
+        chrome.execute_script("arguments[0].click();", botao)
 
-        espera.until(EC.presence_of_element_located((By.XPATH, '//input[@aria-label="Digite uma senha que tenha de 8 a 100 caracteres"]')))
-        chrome.find_element(By.XPATH, '//input[@aria-label="Digite uma senha que tenha de 8 a 100 caracteres"]').send_keys(senha) # Digita a senha do novo usuario
+        espera.until(EC.presence_of_element_located((By.XPATH, '//input[@aria-label="Digite uma senha que tenha de 8 a 100 caracteres"]'))).send_keys(senha)
 
-        chrome.find_element(By.XPATH, '//span[text()="Pedir para o usuário alterar a senha ao fazer login"]/preceding-sibling::div[@role="checkbox"]').click() # Desativa Pedir para o usuário alterar a senha ao fazer login
+        botao = espera.until(EC.presence_of_element_located((By.XPATH, '//span[text()="Pedir para o usuário alterar a senha ao fazer login"]/preceding-sibling::div[@role="checkbox"]')))
+        chrome.execute_script("arguments[0].click();", botao)
         
         adicionar_novo_usuario = chrome.find_element(By.XPATH, '//*[@id="yDmH0d"]/div[5]/div/div[2]/span/c-wiz/div/span/div/c-wiz/div[2]/div[2]/span/span')
-        chrome.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", adicionar_novo_usuario) # Scrola até adicionar novo usuario
+        chrome.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", adicionar_novo_usuario) 
         espera.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="yDmH0d"]/div[5]/div/div[2]/span/c-wiz/div/span/div/c-wiz/div[2]/div[2]/span/span')))
-        
-        adicionar_novo_usuario.click() # Adiciona novo usuario (Finalização do preenchimento de formulario para adionar o usuario)
+        adicionar_novo_usuario.click()
 
         try:
             WebDriverWait(chrome,10).until(EC.element_to_be_clickable((By.XPATH, '//div[@role="button" and .//span[text()="ADICIONAR OUTRO USUÁRIO"]]'))) #Espera o campo adicionar outro usuario
@@ -627,6 +624,36 @@ def cambridge(login_cambridge,senha_cambridge):
     if os.path.exists(caminho_planilha):
         os.remove(caminho_planilha_cambridge)
 
+def red1000(login_red1000,senha_red1000,senha_aluno):
+    chrome.get('https://www.redacaonota1000.com.br/cadastro/turmas/39')
+
+    # Loga no Red1000
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='login']"))).send_keys(login_red1000)
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='senha']"))).send_keys(senha_red1000)
+    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'c-login__button') and normalize-space()='Entrar']"))).click()
+
+    for dicionario in lista_alunos:
+        gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
+        if dicionario['Turma'][2] == 'f':
+            turma = f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
+        elif dicionario['Turma'][2] == 'm':
+            turma = f"{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}"
+
+        botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//div[@class='mat-expansion-panel-body ng-tns-c94-16']//strong[normalize-space()='{turma}']/..")))
+        chrome.execute_script("arguments[0].click();", botao)
+        
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space()='Novo aluno']"))).click()
+
+        janelas = chrome.window_handles
+        chrome.switch_to.window(janelas[-1])
+
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Nome']"))).send_keys(dicionario['Nome'])
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Senha']"))).send_keys(senha_aluno)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Email']"))).send_keys(gmail)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Matrícula']"))).send_keys(str(dicionario['RM']))
+        
+        sleep(1000)
+    
 
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
@@ -642,8 +669,8 @@ for linha in planilha.index:
         'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
         'Turma': planilha.loc[linha,'Turma']})
 
-login_google = ''
-senha_google = ''
+login_google = 'geovane.bussola@madrecabrini.com.br'
+senha_google = 'g61050548@'
 
 login_moodle = ''
 senha_moodle = ''
@@ -657,12 +684,17 @@ senha_matific = ''
 login_cambridge = ''
 senha_cambridge = ''
 
+login_red1000 = ''
+senha_red1000 = ''
+senha_aluno = ''
+
 chrome = webdriver.Chrome()
 chrome.maximize_window()
-espera = WebDriverWait(chrome,30)
+espera = WebDriverWait(chrome,10)
 
 #google(login_google,senha_google)
 #moodle(login_moodle,senha_moodle)
 #ionica(login_ionica,senha_ionica)
 #matific(login_matific,senha_matific)
-cambridge(login_cambridge,senha_cambridge)
+#cambridge(login_cambridge,senha_cambridge)
+#red1000(login_red1000,senha_red1000,senha_aluno)
