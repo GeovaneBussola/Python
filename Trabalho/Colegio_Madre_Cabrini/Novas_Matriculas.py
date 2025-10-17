@@ -6,7 +6,8 @@ from selenium.common.exceptions import TimeoutException
 from time import sleep
 import pandas as pd
 import os
-
+import tkinter as tk
+from openpyxl import load_workbook
 
 def google(login_google,senha_google):
     chrome.get('https://admin.google.com/?utm_source=app_launcher&pli=1&rapt=AEjHL4OWBlzd2dG79Ew2vQtTAXvlSwUj3nIC5fAaM0cW2SZnexcKkPbws4BFKBPKEvWOlWytbGD8fHZ8PyeQmZtNgiiV6xFtJsw4z390jsGjpNQuYTdg67I')
@@ -334,12 +335,17 @@ def ionica(login_ionica,senha_ionica):
             espera.until(EC.visibility_of_element_located((By.XPATH, f"//span[text()='{rm}']"))).click()
 
             # Clica em adicionar Turma
-            botao = espera.until(EC.presence_of_element_located((By.XPATH, "//span[text()='Adicionar a turma']/..")))
+            botao = espera.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Adicionar a turma']/..")))
             chrome.execute_script("arguments[0].click();", botao)
             espera.until(EC.element_to_be_clickable((By.ID, "__button__button"))).click()
 
             # Cria filtro para Decidir qual é a turma do aluno
-            if dicionario['Turma'][2] == 'i':
+            if dicionario['Turma'][2] == 'i' and int(dicionario['Turma'][0]) <= 2:
+                if dicionario['Turma'][4] == 'a':
+                    turma_para_filtro = 'Infantil 1 e 2 A (Manhã)'
+                elif dicionario['Turma'][4] == 'b':
+                    turma_para_filtro = 'Infantil 1 e 2 B (Tarde)'
+            elif dicionario['Turma'][2] == 'i':
                 turma_para_filtro = f'Infantil {dicionario['Turma'][0]} {dicionario['Turma'][4].upper()} '
             elif dicionario['Turma'][2] == 'f':
                 turma_para_filtro = f'{dicionario['Turma'][0]}º ano {dicionario['Turma'][4].upper()}'
@@ -363,113 +369,124 @@ def ionica(login_ionica,senha_ionica):
     chrome.get("chrome://newtab/")
 
 def matific(login_matific,senha_matific):
-    chrome.get('https://www.matific.com/bra/pt-br/teachers/class-management/manage-all-students/83ca4de9-90c3-47af-8487-2e5f5c5a2578')
+    pula = True
+    for i in lista_alunos:
+        if i['Turma'][2] == 'i' and int(i['Turma'][0]) >= 4 or i['Turma'][2] == 'f' and int(i['Turma'][0]) <= 5:
+            pula = False
+            break
 
-    #Loga na Matific
-    espera.until(EC.element_to_be_clickable((By.ID,'username-input'))).send_keys(login_matific)
-    chrome.find_element(By.ID,'login-button').click()
-    espera.until(EC.element_to_be_clickable((By.ID,'password-input'))).send_keys(senha_matific)
-    chrome.find_element(By.ID,'login-button').click()
-    espera.until(EC.element_to_be_clickable((By.ID,'c-accept-btn'))).click()
-    for dicionario in lista_alunos:
-        # Pula se o aluno não precisa ser adicionado na matific
-        if dicionario['Turma'][2] == 'm' or int(dicionario['Turma'][0]) > 5 or dicionario['Turma'][2] == 'i' and int(dicionario['Turma'][0]) < 4:
-            continue
-        
-        # Cria texto para encontrar a turma do aluno
-        if dicionario['Turma'][2] == 'i':
-            turma_para_entrar = f"Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}"
-        elif dicionario['Turma'][2] == 'f':
-            turma_para_entrar= f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
+    if pula == False: # Roda a função somente se na lista tiver aluno que deve ser adicionado na plataforma
+        chrome.get('https://www.matific.com/bra/pt-br/teachers/class-management/manage-all-students/83ca4de9-90c3-47af-8487-2e5f5c5a2578')
 
-        # Cria dados para preencher o formulario
-        nome_completo = dicionario['Nome']
-        nome_dividido = nome_completo.split()
-        primeiro_nome = nome_dividido[0]
-        sobrenome = " ".join(nome_dividido[1:])
-        gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
-        senha = f"{dicionario['RM']}{nome_dividido[-1]}"
-
-        # Seleciona a turma correta para entrar
-        espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
-        botao = espera.until(EC.presence_of_element_located((By.ID,'toggleButton-0')))
-        chrome.execute_script("arguments[0].click();", botao)
-        botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//li[@role='menuitem' and contains(normalize-space(text()), '{turma_para_entrar}')]")))
-        chrome.execute_script("arguments[0].click();", botao)
-        sleep(15)
-        espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[aria-label='Adicionar alunos']"))).click()
-
-        # Adiciona o aluno na turma, somente com nome e sobrenome
-        espera.until(EC.element_to_be_clickable((By.ID,'first_name-0'))).send_keys(f'{primeiro_nome}01')
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='last_name']"))).send_keys(sobrenome)
-        espera.until(EC.element_to_be_clickable((By.ID,'btn-create-students'))).click()
-
-        espera.until(EC.presence_of_element_located((By.XPATH, f"//tr[.//div[@class='cell-text' and normalize-space(text())='{primeiro_nome}01']]"))) # Espera o nome aparecer
-
-        # Localiza todas as linhas da tabela
-        linhas = chrome.find_elements(By.CSS_SELECTOR, "tr[mtcdstablerow]")
-        for linha in linhas:
-            try:
-                # Clica nos 3 pontinhos do aluno que corresponde ao nome e sobrenome
-                colunas = linha.find_elements(By.CSS_SELECTOR, "td div.cell-text")
-                celula_nome = colunas[0].text.strip()
-                celula_sobrenome = colunas[1].text.strip()
-                if celula_nome == f'{primeiro_nome}01' and celula_sobrenome == sobrenome:
-                    linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button").click()
-                    break
-            except:
+        #Loga na Matific
+        espera.until(EC.element_to_be_clickable((By.ID,'username-input'))).send_keys(login_matific)
+        chrome.find_element(By.ID,'login-button').click()
+        espera.until(EC.element_to_be_clickable((By.ID,'password-input'))).send_keys(senha_matific)
+        chrome.find_element(By.ID,'login-button').click()
+        espera.until(EC.element_to_be_clickable((By.ID,'c-accept-btn'))).click()
+        for dicionario in lista_alunos:
+            # Pula se o aluno não precisa ser adicionado na matific
+            if dicionario['Turma'][2] == 'm' or int(dicionario['Turma'][0]) > 5 or dicionario['Turma'][2] == 'i' and int(dicionario['Turma'][0]) < 4:
                 continue
-        
-        # Editar usuario
-        itens_menu = espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
-        for item in itens_menu:
-            try:
-                label = item.find_element(By.CSS_SELECTOR, ".cds--menu-item__label")
-                if "Editar detalhes do aluno" in label.text.strip():
-                    chrome.execute_script("arguments[0].click();", item)
-                    break
-            except:
-                continue
+            
+            # Cria texto para encontrar a turma do aluno
+            if dicionario['Turma'][2] == 'i':
+                turma_para_entrar = f"Infantil {dicionario['Turma'][0]} - {dicionario['Turma'][4].upper()}"
+            elif dicionario['Turma'][2] == 'f':
+                turma_para_entrar= f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
 
-        # Preenche o formulario
-        espera.until(EC.element_to_be_clickable((By.ID,"firstName"))).clear()
-        chrome.find_element(By.ID,"firstName").send_keys(primeiro_nome)
-        espera.until(EC.element_to_be_clickable((By.ID,"username"))).clear()
-        chrome.find_element(By.ID,"username").send_keys(gmail)
-        espera.until(EC.element_to_be_clickable((By.ID,"tempPassword"))).clear()
-        chrome.find_element(By.ID,"tempPassword").send_keys(senha)
-        espera.until(EC.element_to_be_clickable((By.ID,"btn-save"))).click()
+            # Cria dados para preencher o formulario
+            nome_completo = dicionario['Nome']
+            nome_dividido = nome_completo.split()
+            primeiro_nome = nome_dividido[0]
+            sobrenome = " ".join(nome_dividido[1:])
+            gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
+            senha = f"{dicionario['RM']}{nome_dividido[-1]}"
 
-        # Verifica se o luno ja existe, se existe ele exclui
-        try:
-            espera.until(EC.invisibility_of_element((By.ID,'btn-cancel')))
-        except TimeoutException:
-            chrome.find_element(By.ID,'btn-cancel').click()
-            espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "td div.cell-text")))
+            # Seleciona a turma correta para entrar
+            espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
+            botao = espera.until(EC.presence_of_element_located((By.ID,'toggleButton-0')))
+            chrome.execute_script("arguments[0].click();", botao)
+            botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//li[@role='menuitem' and contains(normalize-space(text()), '{turma_para_entrar}')]")))
+            chrome.execute_script("arguments[0].click();", botao)
+            sleep(15)
+            espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a[aria-label='Adicionar alunos']"))).click()
+
+            # Adiciona o aluno na turma, somente com nome e sobrenome
+            espera.until(EC.element_to_be_clickable((By.ID,'first_name-0'))).send_keys(f'{primeiro_nome}01')
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='last_name']"))).send_keys(sobrenome)
+            espera.until(EC.element_to_be_clickable((By.ID,'btn-create-students'))).click()
+
+            espera.until(EC.presence_of_element_located((By.XPATH, f"//tr[.//div[@class='cell-text' and normalize-space(text())='{primeiro_nome}01']]"))) # Espera o nome aparecer
+
+            # Localiza todas as linhas da tabela
+            linhas = chrome.find_elements(By.CSS_SELECTOR, "tr[mtcdstablerow]")
+            sleep(5)
             for linha in linhas:
                 try:
+                    # Clica nos 3 pontinhos do aluno que corresponde ao nome e sobrenome
                     colunas = linha.find_elements(By.CSS_SELECTOR, "td div.cell-text")
                     celula_nome = colunas[0].text.strip()
                     celula_sobrenome = colunas[1].text.strip()
                     if celula_nome == f'{primeiro_nome}01' and celula_sobrenome == sobrenome:
-                        linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button").click()
+                        botao = linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button")
+                        chrome.execute_script("arguments[0].click();", botao)
                         break
                 except:
                     continue
+            
+            # Editar usuario
+            itens_menu = espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "mt-context-menu-item")))
             for item in itens_menu:
                 try:
                     label = item.find_element(By.CSS_SELECTOR, ".cds--menu-item__label")
-                    if "Excluir conta" in label.text.strip():
+                    if "Editar detalhes do aluno" in label.text.strip():
                         chrome.execute_script("arguments[0].click();", item)
                         break
                 except:
                     continue
-            espera.until(EC.element_to_be_clickable((By.XPATH, "//span[normalize-space(text())='Confirmo que desejo excluir permanentemente esta conta']"))).click()
-            chrome.find_element(By.ID,'btn-delete-students').click()
-            espera.until(EC.invisibility_of_element((By.ID,'btn-delete-students')))
-            print(f'Não foi possivel adicionar o aluno {nome_completo} na Matific')
-    sleep(8)
-    chrome.get("chrome://newtab/")
+
+            # Preenche o formulario
+            espera.until(EC.element_to_be_clickable((By.ID,"firstName"))).clear()
+            chrome.find_element(By.ID,"firstName").send_keys(primeiro_nome)
+            espera.until(EC.element_to_be_clickable((By.ID,"username"))).clear()
+            chrome.find_element(By.ID,"username").send_keys(gmail)
+            espera.until(EC.element_to_be_clickable((By.ID,"tempPassword"))).clear()
+            chrome.find_element(By.ID,"tempPassword").send_keys(senha)
+            espera.until(EC.element_to_be_clickable((By.ID,"btn-save"))).click()
+
+            # Verifica se o luno ja existe, se existe ele exclui
+            try:
+                espera.until(EC.invisibility_of_element((By.ID,'btn-cancel')))
+            except TimeoutException:
+                chrome.find_element(By.ID,'btn-cancel').click()
+                espera.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "td div.cell-text")))
+                for linha in linhas:
+                    try:
+                        colunas = linha.find_elements(By.CSS_SELECTOR, "td div.cell-text")
+                        celula_nome = colunas[0].text.strip()
+                        celula_sobrenome = colunas[1].text.strip()
+                        if celula_nome == f'{primeiro_nome}01' and celula_sobrenome == sobrenome:
+                            botao = linha.find_element(By.CSS_SELECTOR, "td.mt--data-table--column--align-end div.mt-data-table--cell button")
+                            chrome.execute_script("arguments[0].click();", botao)
+                            break
+                    except:
+                        continue
+
+                for item in itens_menu:
+                    try:
+                        label = item.find_element(By.CSS_SELECTOR, ".cds--menu-item__label")
+                        if "Excluir conta" in label.text.strip():
+                            chrome.execute_script("arguments[0].click();", item)
+                            break
+                    except:
+                        continue
+                espera.until(EC.element_to_be_clickable((By.XPATH, "//span[normalize-space(text())='Confirmo que desejo excluir permanentemente esta conta']"))).click()
+                chrome.find_element(By.ID,'btn-delete-students').click()
+                espera.until(EC.invisibility_of_element((By.ID,'btn-delete-students')))
+                print(f'Não foi possivel adicionar o aluno {nome_completo} na Matific')
+        sleep(8)
+        chrome.get("chrome://newtab/")
 
 def cambridge(login_cambridge,senha_cambridge):
     def esperar_erros_usernames(chrome):
@@ -485,175 +502,269 @@ def cambridge(login_cambridge,senha_cambridge):
             return False  # Nenhum erro ainda
         return WebDriverWait(chrome, 20).until(condicao)
     
-    chrome.get('https://www.cambridgeone.org/admin/admin/org_cup_z4vVnokQ78pMXTs8/class')
-
-    caminho_planilha_cambridge = os.path.join(diretorio,'cambridge.csv')
-
-    # Loga na Cambridge
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='text' and contains(@placeholder, 'username')]"))).send_keys(login_cambridge)
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password' and contains(@placeholder,'password')]"))).send_keys(senha_cambridge)
-    chrome.find_element(By.XPATH, "//input[@type='submit' and contains(@value,'Log')]").click()
     
-    # Take me back
-    try:
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'back home')]"))).click()
-    except TimeoutException:
-        pass
-    
-    # Abre a aba para descarregar a planilha
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[text()='Students']]"))).click()
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Manage students']"))).click()
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Add new students to classes']"))).click()
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//label[@for='child-radio']"))).click()
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='typeSelect-4']"))).click()
-    
-    # chaves das turmas
-    classkeys =     {'1-f-a':'36E7-G269',
-                     '1-f-b':'9xpr-xBud',
-                     '1-f-c':'fe93-RHY3',
-                     '1-f-d':'MqAW-nVQt',
-                     '2-f-a':'6XMs-PLt9',
-                     '2-f-b':'yFXn-J929',
-                     '2-f-c':'vorb-kDKf',
-                     '2-f-d':'sQMm-MCpz',
-                     '3-f-a':'BKrq-3zoG',
-                     '3-f-b':'VmEG-mZrv',
-                     '3-f-c':'KzqQ-KXLE',
-                     '3-f-d':'7D37-V86W',
-                     '4-f-a':'qHdP-46Ky',
-                     '4-f-b':'yF2y-kF9C',
-                     '4-f-c':'LEFb-m3D3',
-                     '4-f-d':'XRn4-n864',
-                     '4-f-e':'Uv6N-Rixv',
-                     '5-f-a':'2ku3-BDx8',
-                     '5-f-b':'fBLo-KnAX',
-                     '5-f-c':'QocB-s47d',
-                     '5-f-d':'QLN7-iHqT',
-                     '6-f-a':'F2gv-M26s',
-                     '6-f-b':'Jm7B-D2FR',
-                     '6-f-c':'zQh9-BRez',
-                     '6-f-d':'bfL7-TEJd',
-                     '7-f-a':'Tzt6-9p9J',
-                     '7-f-b':'79eD-2jvz',
-                     '7-f-c':'Cm2K-3K28',
-                     '8-f-a':'xuq6-onKi',
-                     '8-f-b':'yb9f-9rg6',
-                     '9-f-a':'e6M2-py32',
-                     '9-f-b':'fsU6-ed6E',
-                     }
-    
-    # Adiciona os dados na planilha da cambridge
-    primeiro_nome1 = []
-    sobrenome1 = []
-    nome_de_usuario1 = []
-    senha1 = []
-    chave_classe1 = []
-    for dicionario in lista_alunos:
-        nome_completo_dividido = dicionario['Nome'].split()
-        primeiro_nome1.append(nome_completo_dividido[0])
-        sobrenome1.append(" ".join(nome_completo_dividido[1:]))
-        nome_de_usuario1.append(f"mc{dicionario['RM']}")
-        senha1.append(f"{dicionario['RM']}{nome_completo_dividido[-1]}")
-        chave_classe1.append(classkeys[dicionario['Turma']])
-    dados = pd.DataFrame({
-        "Student's First name":primeiro_nome1,
-        "Student's Last name":sobrenome1,
-        'Username':nome_de_usuario1,
-        'Password':senha1,
-        'Class key':chave_classe1
-    })
-    dados.to_csv(caminho_planilha_cambridge, index=False)
-    planilha_cambridge = pd.read_csv(caminho_planilha_cambridge)
+    pula = True
+    for i in lista_alunos:
+        if i['Turma'][2] == 'f':
+            pula = False
+            break
 
-    # Upload da planilha csv
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
-    chrome.execute_script("""document.querySelector('input[type="file"]').style.display = 'block';""")
-    input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
-    input_upload.send_keys(caminho_planilha_cambridge)
+    if pula == False: # Roda a função somente se na lista tiver aluno que deve ser adicionado na plataforma
+        chrome.get('https://www.cambridgeone.org/admin/admin/org_cup_z4vVnokQ78pMXTs8/class')
 
-    # Tenta esperar o botao de adicionar contas ficar clicavel, se não ficar ele cria outra planilha sem as contas que dao erro
-    try:
-        espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']")))
-        sleep(999)
-    except TimeoutException:
-        # Cria uma lista com numero da linha e nome de usuario dos usuarios que ja estao no cambridge
-        esperar_erros_usernames(chrome)
-        linhas = chrome.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
-        usernames_duplicados = []
-        for linha in linhas:
-            # Tenta pegar o número da linha, se existir
-            numero_linha_elem = linha.find_elements(By.XPATH, ".//span[contains(@class,'error-text')]")
-            numero_linha = numero_linha_elem[0].text.strip() if numero_linha_elem else "N/A"
-            # Verifica se existe erro no input de username
-            erro_elem = linha.find_elements(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
-            if erro_elem:
-                username_input = linha.find_element(By.XPATH, ".//input[@type='text' and contains(@id,'userName')]")
-                username = username_input.get_attribute("value")
-                usernames_duplicados.append((numero_linha, username))
+        caminho_planilha_cambridge = os.path.join(diretorio,'cambridge.csv')
 
-        # Cria planilha sem duplicatas para fazer o upload na cambridge
-        colunas_originais = planilha_cambridge.columns.tolist() # Salva as colunas padrao antes de renomear elas
-        planilha_cambridge.columns = [c.strip().replace("'", "").replace(" ", "_") for c in planilha_cambridge.columns] # Renomeia as colunas para o pandas conseguir ler a coluna Nome
-        linhas_para_remover = [u[1] for u in usernames_duplicados] # Pega somente o username dos alunos que estao na lista criada anteriormente
-        planilha_sem_duplicados = planilha_cambridge[~planilha_cambridge['Username'].isin(linhas_para_remover)] # remove as linhas da planilha onde estao os alunos que ja exitem na cambridge
-        planilha_sem_duplicados.columns = colunas_originais # renomei a planilha para o padrão
-        novo_caminho = os.path.join(diretorio, 'cambridge_sem_duplicados.csv') 
-        planilha_sem_duplicados.to_csv(novo_caminho, index=False) # Cria a planilha nova sem os usuarios que ja estavam na cambridge
-
-        # Printa o nome do aluno que ja existe
-        for linha in planilha.index:
-            for aluno in linhas_para_remover:
-                try:
-                    if str(planilha.loc[linha,'RM']) == str(aluno[2:]):
-                        aluno_que_ja_existe = planilha.loc[linha,'Nome']
-                        print(f"O aluno {aluno_que_ja_existe} já existe")
-                except KeyError:
-                    pass
+        # Loga na Cambridge
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='text' and contains(@placeholder, 'username')]"))).send_keys(login_cambridge)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password' and contains(@placeholder,'password')]"))).send_keys(senha_cambridge)
+        chrome.find_element(By.XPATH, "//input[@type='submit' and contains(@value,'Log')]").click()
         
-        # Faz o upload da nova planilha
+        # Take me back
+        try:
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'back home')]"))).click()
+        except TimeoutException:
+            pass
+        
+        # Abre a aba para descarregar a planilha
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[text()='Students']]"))).click()
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Manage students']"))).click()
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space(text())='Add new students to classes']"))).click()
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//label[@for='child-radio']"))).click()
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='typeSelect-4']"))).click()
+        
+        # chaves das turmas
+        classkeys =     {'1-f-a':'36E7-G269',
+                        '1-f-b':'9xpr-xBud',
+                        '1-f-c':'fe93-RHY3',
+                        '1-f-d':'MqAW-nVQt',
+                        '2-f-a':'6XMs-PLt9',
+                        '2-f-b':'yFXn-J929',
+                        '2-f-c':'vorb-kDKf',
+                        '2-f-d':'sQMm-MCpz',
+                        '3-f-a':'BKrq-3zoG',
+                        '3-f-b':'VmEG-mZrv',
+                        '3-f-c':'KzqQ-KXLE',
+                        '3-f-d':'7D37-V86W',
+                        '4-f-a':'qHdP-46Ky',
+                        '4-f-b':'yF2y-kF9C',
+                        '4-f-c':'LEFb-m3D3',
+                        '4-f-d':'XRn4-n864',
+                        '4-f-e':'Uv6N-Rixv',
+                        '5-f-a':'2ku3-BDx8',
+                        '5-f-b':'fBLo-KnAX',
+                        '5-f-c':'QocB-s47d',
+                        '5-f-d':'QLN7-iHqT',
+                        '6-f-a':'F2gv-M26s',
+                        '6-f-b':'Jm7B-D2FR',
+                        '6-f-c':'zQh9-BRez',
+                        '6-f-d':'bfL7-TEJd',
+                        '7-f-a':'Tzt6-9p9J',
+                        '7-f-b':'79eD-2jvz',
+                        '7-f-c':'Cm2K-3K28',
+                        '8-f-a':'xuq6-onKi',
+                        '8-f-b':'yb9f-9rg6',
+                        '9-f-a':'e6M2-py32',
+                        '9-f-b':'fsU6-ed6E',
+                        }
+        
+        # Adiciona os dados na planilha da cambridge
+        primeiro_nome1 = []
+        sobrenome1 = []
+        nome_de_usuario1 = []
+        senha1 = []
+        chave_classe1 = []
+        for dicionario in lista_alunos:
+            nome_completo_dividido = dicionario['Nome'].split()
+            primeiro_nome1.append(nome_completo_dividido[0])
+            sobrenome1.append(" ".join(nome_completo_dividido[1:]))
+            nome_de_usuario1.append(f"mc{dicionario['RM']}")
+            senha1.append(f"{dicionario['RM']}{nome_completo_dividido[-1]}")
+            chave_classe1.append(classkeys[dicionario['Turma']])
+        dados = pd.DataFrame({
+            "Student's First name":primeiro_nome1,
+            "Student's Last name":sobrenome1,
+            'Username':nome_de_usuario1,
+            'Password':senha1,
+            'Class key':chave_classe1
+        })
+        dados.to_csv(caminho_planilha_cambridge, index=False)
+        planilha_cambridge = pd.read_csv(caminho_planilha_cambridge)
+
+        # Upload da planilha csv
         espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
         chrome.execute_script("""document.querySelector('input[type="file"]').style.display = 'block';""")
         input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
-        input_upload.send_keys(novo_caminho)
+        input_upload.send_keys(caminho_planilha_cambridge)
 
-    espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']"))).click()
-    sleep(18)
-    chrome.get("chrome://newtab/")
-    if os.path.exists(novo_caminho):
-        os.remove(novo_caminho)
-    if os.path.exists(caminho_planilha):
-        os.remove(caminho_planilha_cambridge)
+        # Tenta esperar o botao de adicionar contas ficar clicavel, se não ficar ele cria outra planilha sem as contas que dao erro
+        try:
+            espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']")))
+            sleep(999)
+        except TimeoutException:
+            # Cria uma lista com numero da linha e nome de usuario dos usuarios que ja estao no cambridge
+            esperar_erros_usernames(chrome)
+            linhas = chrome.find_elements(By.XPATH, "//div[contains(@class,'form-row')]")
+            usernames_duplicados = []
+            for linha in linhas:
+                # Tenta pegar o número da linha, se existir
+                numero_linha_elem = linha.find_elements(By.XPATH, ".//span[contains(@class,'error-text')]")
+                numero_linha = numero_linha_elem[0].text.strip() if numero_linha_elem else "N/A"
+                # Verifica se existe erro no input de username
+                erro_elem = linha.find_elements(By.XPATH, ".//div[contains(@class,'input-group') and contains(@class,'error')]//following-sibling::div/p[contains(text(),'Sorry, that username is not available')]")
+                if erro_elem:
+                    username_input = linha.find_element(By.XPATH, ".//input[@type='text' and contains(@id,'userName')]")
+                    username = username_input.get_attribute("value")
+                    usernames_duplicados.append((numero_linha, username))
 
+            # Cria planilha sem duplicatas para fazer o upload na cambridge
+            colunas_originais = planilha_cambridge.columns.tolist() # Salva as colunas padrao antes de renomear elas
+            planilha_cambridge.columns = [c.strip().replace("'", "").replace(" ", "_") for c in planilha_cambridge.columns] # Renomeia as colunas para o pandas conseguir ler a coluna Nome
+            linhas_para_remover = [u[1] for u in usernames_duplicados] # Pega somente o username dos alunos que estao na lista criada anteriormente
+            planilha_sem_duplicados = planilha_cambridge[~planilha_cambridge['Username'].isin(linhas_para_remover)] # remove as linhas da planilha onde estao os alunos que ja exitem na cambridge
+            planilha_sem_duplicados.columns = colunas_originais # renomei a planilha para o padrão
+            novo_caminho = os.path.join(diretorio, 'cambridge_sem_duplicados.csv') 
+            planilha_sem_duplicados.to_csv(novo_caminho, index=False) # Cria a planilha nova sem os usuarios que ja estavam na cambridge
+
+            # Printa o nome do aluno que ja existe
+            for linha in planilha.index:
+                for aluno in linhas_para_remover:
+                    try:
+                        if str(planilha.loc[linha,'RM']) == str(aluno[2:]):
+                            aluno_que_ja_existe = planilha.loc[linha,'Nome']
+                            print(f"O aluno {aluno_que_ja_existe} já existe")
+                    except KeyError:
+                        pass
+            
+            # Faz o upload da nova planilha
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//button[@qid='aBulkActions-2']")))
+            chrome.execute_script("""document.querySelector('input[type="file"]').style.display = 'block';""")
+            input_upload = chrome.find_element(By.XPATH, "//input[@type='file']")
+            input_upload.send_keys(novo_caminho)
+
+        espera.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[qid='aBulkActions-7']"))).click()
+        sleep(18)
+        chrome.get("chrome://newtab/")
+        if os.path.exists(novo_caminho):
+            os.remove(novo_caminho)
+        if os.path.exists(caminho_planilha):
+            os.remove(caminho_planilha_cambridge)
+        
 def red1000(login_red1000,senha_red1000,senha_aluno):
-    chrome.get('https://www.redacaonota1000.com.br/cadastro/turmas/39')
+    pula = True
+    for i in lista_alunos:
+        if i['Turma'][2] == 'f' and int(i['Turma'][0]) in (8,9) or i['Turma'][2] == 'm' and int(i['Turma'][0]) in (1,2,3):
+            pula = False
+            break
 
-    # Loga no Red1000
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='login']"))).send_keys(login_red1000)
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='senha']"))).send_keys(senha_red1000)
-    espera.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'c-login__button') and normalize-space()='Entrar']"))).click()
+    if pula == False:
+        chrome.get('https://www.redacaonota1000.com.br/cadastro/turmas/39')
 
-    for dicionario in lista_alunos:
-        gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
-        if dicionario['Turma'][2] == 'f':
-            turma = f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
-        elif dicionario['Turma'][2] == 'm':
-            turma = f"{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}"
+        # Loga no Red1000
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='login']"))).send_keys(login_red1000)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@formcontrolname='senha']"))).send_keys(senha_red1000)
+        espera.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'c-login__button') and normalize-space()='Entrar']"))).click()
 
-        botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//div[@class='mat-expansion-panel-body ng-tns-c94-16']//strong[normalize-space()='{turma}']/..")))
-        chrome.execute_script("arguments[0].click();", botao)
-        
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space()='Novo aluno']"))).click()
+        for dicionario in lista_alunos:
+            # Verifica se o aluno deve ser adicionado
+            if (dicionario['Turma'][2] == 'f' and int(dicionario['Turma'][0]) in (8,9) or dicionario['Turma'][2] == 'm' and int(dicionario['Turma'][0]) in (1,2,3)) == False:
+                continue
+            
+            gmail = f"mc.{dicionario['RM']}@madrecabrini.com.br"
+            if dicionario['Turma'][2] == 'f':
+                turma = f"{dicionario['Turma'][0]} Ano {dicionario['Turma'][4].upper()}"
+            elif dicionario['Turma'][2] == 'm':
+                turma = f"{dicionario['Turma'][0]} Série {dicionario['Turma'][4].upper()}"
 
-        janelas = chrome.window_handles
-        chrome.switch_to.window(janelas[-1])
+            turma = f'Turma Teste 2025'
+            botao = espera.until(EC.element_to_be_clickable((By.XPATH, f"//button[.//strong[normalize-space()='{turma}']]")))
+            chrome.execute_script("arguments[0].click();", botao)
+            espera.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, "h1.c-dashboard-content__title"),turma.upper()))
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//a[normalize-space()='Novo aluno']"))).click()
 
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Nome']"))).send_keys(dicionario['Nome'])
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Senha']"))).send_keys(senha_aluno)
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Email']"))).send_keys(gmail)
-        espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Matrícula']"))).send_keys(str(dicionario['RM']))
-        
-        sleep(1000)
+            janelas = chrome.window_handles
+            chrome.switch_to.window(janelas[-1])
+
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Nome']"))).send_keys(dicionario['Nome'])
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Senha']"))).send_keys(senha_aluno)
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Email']"))).send_keys(gmail)
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//input[@data-placeholder='Matrícula']"))).send_keys(str(dicionario['RM']))
+            espera.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Salvar']"))).click()
+            try:
+                espera.until(EC.presence_of_element_located((By.XPATH, "//div[@role='alert' and @aria-label='O usuário foi cadastrado.']")))
+            except TimeoutException:
+                print(f'Não foi possivel adicionar o aluno {dicionario['Nome']} na red1000')
+
+            chrome.switch_to.window(janelas[0])
+
+def adicionar_na_planilha():
+    planilha_senhas_plataformas = r'Y:\Credenciais de acesso\PLANILHA_SENHAS_PLATAFORMAS2025.xlsx'
+    wb = load_workbook(planilha_senhas_plataformas)
+    ws = wb.active
+    for i in lista_alunos:
+        rm = str(i['RM'])
+        nome_completo = i['Nome']
+        data_de_nacimento = i['Data_de_Nascimento']
+        data_sem_barra = str(data_de_nacimento).replace('/','')
+        nome_dividido = nome_completo.split()
+        ultimo_nome = nome_dividido[-1]
+        primeiro_nome = nome_dividido[0]
+        senha_google_exceção = ''
+        usuario = f"mc.{rm}@madrecabrini.com.br"
+
+        if len(f"{rm}{ultimo_nome}") == 10:
+            senha_google_exceção = f"{rm}{ultimo_nome}@"
+        senha_plataformas_aluno = f"{rm}{ultimo_nome}"
+
+        if i['Turma'][2] == 'i' and int(i['Turma'][0]) <= 3:
+            if int(i['Turma'][0]) == 3:
+                turma = f"ED.INFANTIL {i['Turma'][0]}{i['Turma'][4].upper()} - 2025"
+            elif i['Turma'][4] == 'a':
+                turma = 'ED.INFANTIL 1e2A  2025'
+            elif i['Turma'][4] == 'b':
+                turma = 'ED.INFANTIL 1e2B  2025'
+            nova_linha = [i['Nome'],turma,rm,usuario,senha_plataformas_aluno,"","","","","","",data_de_nacimento,data_sem_barra]
+
+        elif i['Turma'][2] == 'i':
+            turma = f"ED.INFANTIL {i['Turma'][0]}{i['Turma'][4].upper()} - 2025"
+            nova_linha = [i['Nome'],turma,rm,usuario,senha_plataformas_aluno,'',f'{rm}{primeiro_nome.capitalize()}{data_sem_barra[:3]}',senha_google_exceção,'','','',data_de_nacimento,data_sem_barra]
+            
+        elif i['Turma'][2] == 'f' and int(i['Turma'][0]) <= 7:
+            turma = f"{i['Turma'][0]} ano {i['Turma'][4].upper()} - 2025"
+            nova_linha = [i['Nome'],turma,rm,usuario,senha_plataformas_aluno,f'mc{rm}',f'{rm}{primeiro_nome.capitalize()}{data_sem_barra[:3]}',senha_google_exceção,'','','',data_de_nacimento,data_sem_barra]
+
+        elif i['Turma'][2] == 'f' and int(i['Turma'][0]) <= 9:
+            turma = f"{i['Turma'][0]} ANO {i['Turma'][4].upper()} - 2025"
+            nova_linha = [i['Nome'],turma,rm,usuario,senha_plataformas_aluno,f'mc{rm}',f'{rm}{primeiro_nome.capitalize()}{data_sem_barra[:3]}',senha_google_exceção,'',usuario,'Red1000',data_de_nacimento,data_sem_barra]
+
+        elif i['Turma'][2] == 'm':
+            turma = f"EM - {i['Turma'][0]} SERIE {i['Turma'][4].upper()}"
+            nova_linha = [i['Nome'],turma,rm,usuario,senha_plataformas_aluno,'',f'{rm}{primeiro_nome.capitalize()}{data_sem_barra[:3]}',senha_google_exceção,'',usuario,'Red1000',data_de_nacimento,data_sem_barra]
+        ws.append(nova_linha)
+
+        wb.save(planilha_senhas_plataformas)
+
+def executar():
+    root.destroy()
+    if v_planilha.get():
+        adicionar_na_planilha()
+    if v_google.get() or v_moodle.get() or v_ionica.get() or v_matific.get() or v_cambridge.get() or v_red1000.get():
+        global chrome, espera
+        chrome = webdriver.Chrome()
+        chrome.maximize_window()
+        espera = WebDriverWait(chrome,10)
     
+    if v_google.get():
+        google(login_google,senha_google)
+    if v_moodle.get():
+        moodle(login_moodle,senha_moodle)
+    if v_ionica.get():
+        ionica(login_ionica,senha_ionica)
+    if v_matific.get():
+        matific(login_matific,senha_matific)
+    if v_cambridge.get():
+        cambridge(login_cambridge,senha_cambridge)
+    if v_red1000.get():
+        red1000(login_red1000,senha_red1000,senha_aluno)
 
 # Acessa a planilha
 diretorio = os.path.dirname(os.path.abspath(__file__))
@@ -669,32 +780,55 @@ for linha in planilha.index:
         'Data_de_Nascimento': planilha.loc[linha,'Data_de_Nascimento'],
         'Turma': planilha.loc[linha,'Turma']})
 
-login_google = ''
+login_google = 'geovane.bussola@madrecabrini.com.br'
 senha_google = ''
-
-login_moodle = ''
+login_moodle = '57915052802'
 senha_moodle = ''
-
-login_ionica = ''
+login_ionica = 'geovanebussola'
 senha_ionica = ''
-
-login_matific = ''
+login_matific = 'geovane.bussola@madrecabrini.com.br'
 senha_matific = ''
-
-login_cambridge = ''
+login_cambridge = 'evandro.david@madrecabrini.com.br'
 senha_cambridge = ''
-
-login_red1000 = ''
+login_red1000 = 'geovane.bussola@madrecabrini.com.br'
 senha_red1000 = ''
 senha_aluno = ''
 
-chrome = webdriver.Chrome()
-chrome.maximize_window()
-espera = WebDriverWait(chrome,10)
+largura = 300
+altura = 280
 
-#google(login_google,senha_google)
-#moodle(login_moodle,senha_moodle)
-#ionica(login_ionica,senha_ionica)
-#matific(login_matific,senha_matific)
-#cambridge(login_cambridge,senha_cambridge)
-#red1000(login_red1000,senha_red1000,senha_aluno)
+root = tk.Tk()
+root.title('Cadastros')
+root.geometry(f'{largura}x{altura}')
+
+largura_tela = root.winfo_screenwidth()
+altura_tela = root.winfo_screenheight()
+
+# --- Calcula posição x e y ---
+pos_x = (largura_tela // 2) - (largura // 2)
+pos_y = (altura_tela // 2) - (altura // 2)
+
+# --- Define a geometria (com posição) ---
+root.geometry(f"{largura}x{altura}+{pos_x}+{pos_y-45}")
+
+v_google = tk.BooleanVar(value=True)
+v_moodle = tk.BooleanVar(value=True)
+v_ionica = tk.BooleanVar(value=True)
+v_matific = tk.BooleanVar(value=True)
+v_cambridge = tk.BooleanVar(value=True)
+v_red1000 = tk.BooleanVar(value=True)
+v_planilha = tk.BooleanVar(value=True)
+
+tk.Label(root,text='Cadastrar',font=('Arial', 14)).pack(pady=8)
+
+tk.Checkbutton(root,text="Planilha",variable=v_planilha).pack(anchor="w",padx=20)
+tk.Checkbutton(root, text="Google", variable=v_google).pack(anchor="w", padx=20)
+tk.Checkbutton(root, text="Moodle",variable=v_moodle).pack(anchor="w", padx=20)
+tk.Checkbutton(root, text="Iônica",variable=v_ionica).pack(anchor="w", padx=20)
+tk.Checkbutton(root, text="Matific",variable=v_matific).pack(anchor="w", padx=20)
+tk.Checkbutton(root, text="Cambridge",variable=v_cambridge).pack(anchor="w", padx=20)
+tk.Checkbutton(root, text="Red1000",variable=v_red1000).pack(anchor="w", padx=20)
+
+tk.Button(root, text="Executar", command=executar, bg="#FF00D4", fg="white").pack(pady=10)
+
+root.mainloop()
